@@ -48,7 +48,8 @@ CATS_SHOP_APP = [
    'dashboard',
    'profile_client',
    'payment_gateway',
-   'billing'
+   'billing',
+   'product',
 ]
 
 
