@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from cloudinary import config
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,7 +43,7 @@ DJANGO_APPS = [
 ]
 
 EXTERNAL_APPS = [
-   
+    'cloudinary',
 ]
 
 CATS_SHOP_APP = [
@@ -137,3 +141,15 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+#*Configuracion de cloudinary
+from cloudinary import config
+
+config(
+    cloud_name = os.getenv('NAME_CLOUDINARY'),
+    api_key = os.getenv('API_KEY_CLOUDINARY'),
+    api_secret = os.getenv('API_SECRET_CLOUDINARY'),
+    secure = True,
+    # redirect_secure = True,
+    # cname = 'your_custom_domain.com'
+)

@@ -1,9 +1,13 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 
 class ProductCategory(models.Model):
-   pass
    name = models.CharField(max_length=250, null=False)
-   image = models.ImageField(upload_to='category/')
+   image = CloudinaryField('image', folder='category')
+
+   class Meta:
+      db_table = 'product_category'
+
 
 # Create your models here.
 class ProductModel(models.Model):
@@ -20,3 +24,6 @@ class ProductModel(models.Model):
    created_at = models.DateTimeField(auto_now_add=True)
    updated_at = models.DateTimeField(auto_now=True)
 
+   class Meta:
+      db_table = 'product'
+ 
