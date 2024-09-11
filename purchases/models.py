@@ -15,7 +15,7 @@ class OrderModel(models.Model):
        db_table = 'order'
 
 # quantity = models.IntegerField(null=False, validators=[MinValueValidator(1)])
-class OrderDetail(models.Model):
+class OrderDetailModel(models.Model):
     id = models.AutoField(primary_key=True)
     quantity = models.IntegerField(null=False, default=1)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=False)
@@ -65,7 +65,7 @@ class OrderDeliveryModel(models.Model):
 class OrderStoreModel(models.Model):
    id = models.AutoField(primary_key=True)
    store_name = models.CharField(max_length=250)
-   order = models.OneToOneField(OrderModel, on_delete=models.SET_NULL, related_name='order_store')
+   order = models.OneToOneField(OrderModel, null=True,on_delete=models.SET_NULL, related_name='order_store')
 
    class Meta:
        db_table = 'order_store'
@@ -74,7 +74,8 @@ class OrderPaymentModel(models.Model):
    id = models.AutoField(primary_key=True)
    amount = models.DecimalField(max_digits=10, decimal_places=2, null=False)
    payment_method = models.CharField(max_length=50)
-   order = models.OneToOneField(OrderModel, on_delete=models.SET_NULL, related_name='order_payment')
+   patment_date = models.DateTimeField(auto_now_add=True)
+   order = models.OneToOneField(OrderModel, null=True,on_delete=models.SET_NULL, related_name='order_payment')
 
    class Meta:
        db_table = 'order_payment'
@@ -82,7 +83,7 @@ class OrderPaymentModel(models.Model):
 class OrderUserTempModel(models.Model):
    id = models.AutoField(primary_key=True)
    email = models.EmailField(max_length=200, null=False)
-   user = models.OneToOneField(OrderModel, on_delete=models.SET_NULL, related_name='order_user_temp')
+   user = models.OneToOneField(OrderModel, null=True, on_delete=models.SET_NULL, related_name='order_user_temp')
 
    class Meta:
       db_table = 'order_user_temp'

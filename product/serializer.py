@@ -1,12 +1,12 @@
 
 from rest_framework.serializers import ModelSerializer
-from .models import ProductCategory
+from .models import ProductCategoryModel
 
 
 class ProductCategorySerializer(ModelSerializer):
 
    class Meta:
-      model = ProductCategory
+      model = ProductCategoryModel
       fields = '__all__'
 
    def to_representation(self, instance):

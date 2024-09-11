@@ -1,7 +1,7 @@
 from django.db import models
 from cloudinary.models import CloudinaryField
 
-class ProductCategory(models.Model):
+class ProductCategoryModel(models.Model):
    name = models.CharField(max_length=250, null=False)
    image = CloudinaryField('image', folder='category')
 
@@ -20,7 +20,7 @@ class ProductModel(models.Model):
    status = models.BooleanField(default=True)
    stock = models.IntegerField(null=False, default=1)
    
-   category = models.ForeignKey(ProductCategory, on_delete=models.CASCADE) 
+   category = models.ForeignKey(ProductCategoryModel, on_delete=models.CASCADE) 
    created_at = models.DateTimeField(auto_now_add=True)
    updated_at = models.DateTimeField(auto_now=True)
 
