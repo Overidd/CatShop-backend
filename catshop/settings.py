@@ -43,7 +43,10 @@ DJANGO_APPS = [
 ]
 
 EXTERNAL_APPS = [
+    'rest_framework',
     'cloudinary',
+    'rest_framework_simplejwt',
+    'drf_yasg',
 ]
 
 CATS_SHOP_APP = [
@@ -153,3 +156,16 @@ config(
     # redirect_secure = True,
     # cname = 'your_custom_domain.com'
 )
+
+#*Configuracion JWT
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=8),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=20),
+}
