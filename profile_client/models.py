@@ -3,9 +3,9 @@ from cloudinary.models import CloudinaryField
 
 class UserClientModel(models.Model):
    id = models.AutoField(primary_key=True)
-   name = models.CharField(max_length=200, blank=False)
-   last_name = models.CharField(max_length=200, blank=True)
+   name = models.CharField(max_length=200)
    image = CloudinaryField('image', folder='user_client/')
+   last_name = models.CharField(max_length=200, null=True)
    password = models.TextField(blank=False, null=False)
    email = models.EmailField(max_length=254, unique=True)
    code_google = models.CharField(max_length=200, blank=True, null=True)

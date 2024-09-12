@@ -1,5 +1,6 @@
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
 from profile_client.models import UserClientModel
 
 # Función para crear el token con el correo electrónico añadido al payload
@@ -19,6 +20,8 @@ class UsertokenSerializer():
       }
 
 class UserRegisterSerializer(ModelSerializer):
+   password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+
    class Meta:
       model = UserClientModel
       fields = ['name', 'email', 'password']
@@ -27,12 +30,10 @@ class UserRegisterSerializer(ModelSerializer):
    def validate_password(self, value):
         return make_password(value)
    
-class UserEmailSerializer(ModelSerializer):
-    class Meta:
-      model = UserClientModel
-      fields = ['emain', 'verification_code']
+class UserEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    verification_code = serializers.CharField(max_length=6)
 
-class UserLoginSerializer(ModelSerializer):
-   class Meta:
-      model = UserClientModel
-      fields = ['email', 'password']
+class UserLoginSerializer(serializers.Serializer):
+   email = serializers.EmailField()
+   password = serializers.CharField()
