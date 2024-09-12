@@ -50,13 +50,13 @@ class OrderIdentificationModel(models.Model):
 
 class OrderDeliveryModel(models.Model):
     id = models.AutoField(primary_key=True) 
-    department = models.CharField(max_length=250)
-    province = models.CharField(max_length=250)
-    district = models.CharField(max_length=250)
-    address = models.CharField(max_length=250)
-    street = models.CharField(max_length=250)
+    department = models.CharField(max_length=100)
+    province = models.CharField(max_length=100)
+    district = models.CharField(max_length=100)
+    address = models.CharField(max_length=100)
+    street = models.CharField(max_length=100)
     street_number = models.CharField(max_length=50) 
-    reference = models.CharField(max_length=250, null=True)
+    reference = models.TextField(null=True)
     order = models.OneToOneField(OrderModel, null=True, on_delete=models.SET_NULL, related_name='order_delivery')
     
     class Meta:

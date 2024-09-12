@@ -1,5 +1,7 @@
 from django.db import models
 from cloudinary.models import CloudinaryField
+from purchases.models import OrderModel
+from product.models import ProductModel
 
 class UserClientModel(models.Model):
    id = models.AutoField(primary_key=True)
@@ -20,5 +22,44 @@ class UserClientModel(models.Model):
    class Meta:
       db_table = 'user_client'
 
-   def __str__(self):
-        return f"{self.name} {self.last_name}"
+
+class UserAddressModel(models.Model):
+   id = models.AutoField(primary_key=True)
+   department = models.CharField(max_length=100)
+   province = models.CharField(max_length=100)
+   district = models.CharField(max_length=100)
+   address = models.CharField(max_length=250)
+   street = models.CharField(max_length=100)
+   street_number = models.CharField(max_length=50) 
+   reference = models.TextField(null=True)
+   user_client = models.ForeignKey(UserClientModel, related_name='user_address' ,on_delete=models.CASCADE)
+
+   class Meta:
+      db_table = 'user_address'
+
+class UserPaymentMethodModel(models.Model):
+   id = models.AutoField(primary_key=True)
+   amount = models.DecimalField(max_digits=10, decimal_places=2, null=False)
+   payment_method = models.CharField(max_length=100)
+   patment_date = models.DateTimeField(auto_now_add=True)
+   user_client = models.ForeignKey(UserClientModel, related_name='user_payment_method', null=True,on_delete=models.CASCADE)
+   user = models.ForeignKey(UserClientModel, related_name='user_payment', on_delete=models.CASCADE)
+
+   class Meta:
+      db_table = 'user_payment_method'
+
+class UserOrderModel(models.Model):
+   id = models.AutoField(primary_key=True)
+   order = models.OneToOneField(OrderModel, related_name='user_order', on_delete=models.CASCADE)
+
+   class Meta:
+      db_table = 'user_order'
+   
+   
+class UserFavoritesModel(models.Model):
+    id = models.AutoField(primary_key=True)
+    product = models.ForeignKey(ProductModel, related_name='favorite_product', on_delete=models.CASCADE)
+    user_client = models.ForeignKey(UserClientModel, related_name='favorite_user', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'user_favorite'
