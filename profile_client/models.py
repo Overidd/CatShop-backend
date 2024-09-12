@@ -42,8 +42,7 @@ class UserPaymentMethodModel(models.Model):
    amount = models.DecimalField(max_digits=10, decimal_places=2, null=False)
    payment_method = models.CharField(max_length=100)
    patment_date = models.DateTimeField(auto_now_add=True)
-   user_client = models.ForeignKey(UserClientModel, related_name='user_payment_method', null=True,on_delete=models.CASCADE)
-   user = models.ForeignKey(UserClientModel, related_name='user_payment', on_delete=models.CASCADE)
+   user_client = models.ForeignKey(UserClientModel, related_name='user_payment', null=True,on_delete=models.CASCADE)
 
    class Meta:
       db_table = 'user_payment_method'

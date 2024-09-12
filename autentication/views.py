@@ -6,6 +6,9 @@ from django.core.mail import send_mail
 
 from profile_client.models import UserClientModel
 from purchases.models import OrderModel, OrderUserTempModel
+from profile_client.models import (
+   UserClientModel, UserAddressModel, UserPaymentMethodModel, UserOrderModel
+)
 
 from .serializers import (
    UsertokenSerializer, UserEmailSerializer, UserRegisterSerializer, UserLoginSerializer, ResendCodeSerializer
@@ -65,13 +68,14 @@ class UserRegisterView(APIView):
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class VerifyEmailView(APIView):
+class VerifyEmailView(APIView): 
    def post(self, request):
       serializer = UserEmailSerializer(data=request.data)
       serializer.is_valid(raise_exception=True)
       validated_data = serializer.validated_data
       
       try:
+         # Verificar si el usuario existe y si el código es correcto
          user = UserClientModel.objects.get(email=validated_data['email'], verification_code=validated_data['verification_code'])
 
       except UserClientModel.DoesNotExist:
@@ -79,38 +83,61 @@ class VerifyEmailView(APIView):
             "message": "Código incorrecto",
             "error": "error"
          }, status=status.HTTP_400_BAD_REQUEST)
-      
-      
-      # Actualizar los campos de verificacion de usuario
+   
       user.is_verified = True
-      user.verification_code = None  # Eliminar el código de verificación
+      user.verification_code = None 
       user.save()
-      #TODO: Generar un token (usando JWT)
+      
+      # Generar un token (usando JWT)
       token = UsertokenSerializer.get_tokens_user(user)
       
+      # TODO: Recuperar el historial del usuario
       try:
-         # TODO: Recuperar el historial del usuario | OrderMode, OrderUserTempModel |
-         isOrderUser = OrderUserTempModel.objects.filter(email= validated_data['email'])
-         
-         orderIdentifications = []
-         orderDeliveries = []
-         orderPayments = []
+         isOrderUser = OrderUserTempModel.objects.filter(email=validated_data['email'])
 
-         if isOrderUser.exists():  # Verifica si el QuerySet no está vacío
-            for orderUser in isOrderUser:
-               try:
-                     order = OrderModel.objects.get(id=orderUser.order_id)
+         if isOrderUser.exists(): 
+            orders = OrderModel.objects.filter(id__in=[orderUser.order_id for orderUser in isOrderUser]).order_by('-created_at')
 
-                     if order.identification:
-                        orderIdentifications.append(order.identification)
-                     if order.delivery:
-                        orderDeliveries.append(order.delivery)
-                     if order.payment:
-                        orderPayments.append(order.payment)
-                        
-               except OrderModel.DoesNotExist:
-                  continue
+            if orders:
+               # Actualizar los datos del usuario con la identificación del pedido más reciente
+               latest_order = orders[0]
+               identification = latest_order.order_identification
+               user.last_name = identification.last_name
+               user.document_number = identification.document_number
+               user.phone = identification.phone
+               user.ruc = identification.ruc
+               user.save()
+               
+               # Crear la dirección del usuario
+               if latest_order.order_delivery:
+                  address = latest_order.order_delivery
+                  UserAddressModel.objects.create(
+                     department=address.department,
+                     province=address.province,
+                     district=address.district,
+                     address=address.address,
+                     street=address.street,
+                     street_number=address.street_number,
+                     reference=address.reference,
+                     user_client=user.id
+                  )
 
+               # Guardar los métodos de pago y pedidos
+               for order in orders:
+                  if order.order_payment:
+                     payment = order.order_payment
+                     UserPaymentMethodModel.objects.create(
+                        amount=payment.amount,
+                        payment_method=payment.payment_method,
+                        payment_data=payment.payment_data, 
+                        user_client=user.id,
+                     )
+                      
+                  UserOrderModel.objects.create(
+                     order=order.id,
+                     user_client=user.id
+                  )
+               
          return Response({
             "message": "Verificación completada",
             "access_token": token['access'],
@@ -121,13 +148,13 @@ class VerifyEmailView(APIView):
          return Response({
             "message": "Datos inválidos",
             "errors": e.detail 
-         }, status=status.HTTP_400_BAD_REQUEST)      
-      
+         }, status=status.HTTP_400_BAD_REQUEST)
+
       except Exception as e:
          return Response({
             "message": "Ocurrió un error inesperado",
             "error": str(e)
-         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)      
+         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class UserloginView(APIView):
