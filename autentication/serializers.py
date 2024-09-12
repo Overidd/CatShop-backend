@@ -1,9 +1,9 @@
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.serializers import ModelSerializer
 from profile_client.models import UserClientModel
-from django.contrib.auth.hashers import make_password  # Import para encriptar la contraseña
 
 # Función para crear el token con el correo electrónico añadido al payload
+from django.contrib.auth.hashers import make_password 
 class UsertokenSerializer():
    def get_tokens_user(user):
       refresh = RefreshToken.for_user(user)
