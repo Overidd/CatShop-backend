@@ -89,7 +89,6 @@ class VerifyEmailView(APIView):
       token = UsertokenSerializer.get_tokens_user(user)
       
       try:
-
          # TODO: Recuperar el historial del usuario | OrderMode, OrderUserTempModel |
          isOrderUser = OrderUserTempModel.objects.filter(email= validated_data['email'])
          
@@ -192,7 +191,7 @@ class ResendCodeView(APIView):
          # Generar nuevo codigo de verificación
          verification_code = str(random.randint(1000, 9999))         
          user.verification_code = verification_code
-         user.status = False
+         user.is_verified = False
          user.save()
 
          # Volver a enviar codigo de verificación
