@@ -51,6 +51,7 @@ class UserPaymentMethodModel(models.Model):
 class UserOrderModel(models.Model):
    id = models.AutoField(primary_key=True)
    order = models.OneToOneField(OrderModel, related_name='user_order', on_delete=models.CASCADE)
+   user_client = models.ForeignKey(UserClientModel, related_name='user_client', on_delete=models.CASCADE)
 
    class Meta:
       db_table = 'user_order'
