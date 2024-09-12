@@ -33,7 +33,11 @@ class UserRegisterSerializer(ModelSerializer):
 class UserEmailSerializer(serializers.Serializer):
     email = serializers.EmailField()
     verification_code = serializers.CharField(max_length=6)
+    
 
 class UserLoginSerializer(serializers.Serializer):
    email = serializers.EmailField()
    password = serializers.CharField()
+
+class ResendCodeSerializer(serializers.Serializer):
+   email = serializers.EmailField()

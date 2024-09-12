@@ -8,7 +8,7 @@ from profile_client.models import UserClientModel
 from purchases.models import OrderModel, OrderUserTempModel
 
 from .serializers import (
-   UsertokenSerializer, UserEmailSerializer, UserRegisterSerializer, UserLoginSerializer
+   UsertokenSerializer, UserEmailSerializer, UserRegisterSerializer, UserLoginSerializer, ResendCodeSerializer
 )
 import random
 
@@ -65,37 +65,52 @@ class UserRegisterView(APIView):
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-class UserRegisterGoogleView(APIView):
-   pass
-
 class VerifyEmailView(APIView):
    def post(self, request):
+      serializer = UserEmailSerializer(data=request.data)
+      serializer.is_valid(raise_exception=True)
+      validated_data = serializer.validated_data
+      
       try:
-         serializer = UserEmailSerializer(data=request.data)
-         serializer.is_valid(raise_exception=True)
-         validated_data = serializer.validated_data
-         
          user = UserClientModel.objects.get(email=validated_data['email'], verification_code=validated_data['verification_code'])
-         
-         if not user.is_verified:
-            return Response({
-                "message": "El código de verificación es incorrecto"
-            }, status=status.HTTP_400_BAD_REQUEST)
 
-         # Actualizar los campos de verificacion de usuario
-         user.is_verified = True
-         user.verification_code = None  # Eliminar el código de verificación
-         user.save()
-
-         #TODO: Generar un token (usando JWT)
-         token = UsertokenSerializer.get_tokens_user(user)
-
+      except UserClientModel.DoesNotExist:
+         return Response({
+            "message": "Código incorrecto",
+            "error": "error"
+         }, status=status.HTTP_400_BAD_REQUEST)
+      
+      
+      # Actualizar los campos de verificacion de usuario
+      user.is_verified = True
+      user.verification_code = None  # Eliminar el código de verificación
+      user.save()
+      #TODO: Generar un token (usando JWT)
+      token = UsertokenSerializer.get_tokens_user(user)
+      
+      try:
 
          # TODO: Recuperar el historial del usuario | OrderMode, OrderUserTempModel |
-         # isOrderUser = OrderUserTempModel.objects.filter(email= validated_data['email'])
-         # if isOrderUser:
-            # userOrderInfo = OrderModel.objects.filter(order=isOrderUser)
+         isOrderUser = OrderUserTempModel.objects.filter(email= validated_data['email'])
+         
+         orderIdentifications = []
+         orderDeliveries = []
+         orderPayments = []
+
+         if isOrderUser.exists():  # Verifica si el QuerySet no está vacío
+            for orderUser in isOrderUser:
+               try:
+                     order = OrderModel.objects.get(id=orderUser.order_id)
+
+                     if order.identification:
+                        orderIdentifications.append(order.identification)
+                     if order.delivery:
+                        orderDeliveries.append(order.delivery)
+                     if order.payment:
+                        orderPayments.append(order.payment)
+                        
+               except OrderModel.DoesNotExist:
+                  continue
 
          return Response({
             "message": "Verificación completada",
@@ -110,10 +125,10 @@ class VerifyEmailView(APIView):
          }, status=status.HTTP_400_BAD_REQUEST)      
       
       except Exception as e:
-          return Response({
-              "message": "Ocurrió un error inesperado",
-              "error": str(e)
-          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)      
+         return Response({
+            "message": "Ocurrió un error inesperado",
+            "error": str(e)
+         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)      
 
 
 class UserloginView(APIView):
@@ -158,3 +173,55 @@ class UserloginView(APIView):
             "message": "Ocurrió un error inesperado",
             "error": str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ResendCodeView(APIView):
+   def post(self, request):
+      try:
+         serializer = ResendCodeSerializer(data=request.data)
+         serializer.is_valid(raise_exception=True)
+         validated_data = serializer.validated_data
+
+         #Verificar si existe una cuenta
+         user = UserClientModel.objects.get(email=validated_data['email'])
+         if not user.is_verified:
+            return Response({
+                "message": "unauthorized",
+            }, status=status.HTTP_404_NOT_FOUND)
+         
+         # Generar nuevo codigo de verificación
+         verification_code = str(random.randint(1000, 9999))         
+         user.verification_code = verification_code
+         user.status = False
+         user.save()
+
+         # Volver a enviar codigo de verificación
+      
+         send_mail(
+            f'Hola {user.name} Confitme tu cuenta CatShop',
+            f'Tu codigo de verificaion es: {verification_code}',
+            'noreply@localhost.com', 
+            [user.email], 
+            fail_silently=False  
+         )
+
+         print(validated_data)
+         return Response({
+            "message": "Código de verificación enviado correctamente"
+         })   
+         
+      except serializers.ValidationError as e:
+         return Response({
+            "message": "Datos inválidos",
+            "errors": e.detail
+         }, status=status.HTTP_400_BAD_REQUEST)
+
+      except Exception as e:
+         return Response({
+            "message": "Ocurrió un error inesperado",
+            "error": str(e)
+         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+         
+
+class UserRegisterGoogleView(APIView):
+   pass
