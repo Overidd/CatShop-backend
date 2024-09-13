@@ -37,4 +37,7 @@ urlpatterns = [
     # Rutas de Autenticacion 
     path('api/v1/auth/', include('autentication.urls')),
     path('api/v1/perfil/', include('profile_client.urls')),
+
+    # Rutas de generar order y pasarela de pagos
+    path('api/v1/order/', include('payment_gateway.urls')),
 ]
