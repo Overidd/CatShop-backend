@@ -1,18 +1,28 @@
+from typing import Iterable
 from django.db import models
 from product.models import ProductModel
 from django.core.validators import MinValueValidator
+from hashids import Hashids
+
+hashids = Hashids(salt="sdf78Pxq34lZsada", min_length=6)
 
 # Create your models here.
 class OrderModel(models.Model):
-   id = models.AutoField(primary_key=True)
-   code = models.CharField(max_length=200, null=False, unique=True)
-   total = models.DecimalField(max_digits=10, decimal_places=2 ,null=False)   
-   status = models.BooleanField(null=False, default=True)
-   created_at = models.DateTimeField(auto_now_add=True)
-   updated_at = models.DateTimeField(auto_now=True)
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=200, unique=True)
+    total = models.DecimalField(max_digits=10, decimal_places=2 ,null=False)   
+    status = models.BooleanField(null=False, default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-   class Meta:
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = hashids.encode(self.id)
+        super().save(*args, **kwargs)
+    
+    class Meta:
        db_table = 'order'
+
 
 # quantity = models.IntegerField(null=False, validators=[MinValueValidator(1)])
 class OrderDetailModel(models.Model):
@@ -83,7 +93,7 @@ class OrderPaymentModel(models.Model):
 class OrderUserTempModel(models.Model):
    id = models.AutoField(primary_key=True)
    email = models.EmailField(max_length=200, null=False)
-   user = models.OneToOneField(OrderModel, null=True, on_delete=models.SET_NULL, related_name='order_user_temp')
+   order = models.OneToOneField(OrderModel, null=True, on_delete=models.SET_NULL, related_name='order_temp')
 
    class Meta:
       db_table = 'order_user_temp'

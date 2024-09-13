@@ -9,6 +9,10 @@ class UserClientSerializer(ModelSerializer):
         extra_kwargs = {
             'password': {'write_only': True}
         }
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['image'] = instance.image.url
+        return representation
 
 class UserFavoritesSerializer(ModelSerializer):
     class Meta:
@@ -39,4 +43,4 @@ class UserDetailSerializer(ModelSerializer):
     class Meta:
         model = UserClientModel
         fields = '__all__'
-
+    

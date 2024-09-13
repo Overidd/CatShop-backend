@@ -57,9 +57,9 @@ class UserOrderModel(models.Model):
    
    
 class UserFavoritesModel(models.Model):
-    id = models.AutoField(primary_key=True)
-    product = models.ForeignKey(ProductModel, related_name='favorite_product', on_delete=models.CASCADE)
-    user_client = models.ForeignKey(UserClientModel, related_name='favorite_user', on_delete=models.CASCADE)
-
-    class Meta:
+   id = models.AutoField(primary_key=True)
+   product = models.ForeignKey(ProductModel, related_name='favorite_product', on_delete=models.CASCADE)
+   user_client = models.ForeignKey(UserClientModel, related_name='favorite_user', on_delete=models.CASCADE)
+      
+   class Meta:
         db_table = 'user_favorite'
