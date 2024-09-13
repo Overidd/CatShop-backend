@@ -36,4 +36,5 @@ urlpatterns = [
 
     # Rutas de Autenticacion 
     path('api/v1/auth/', include('autentication.urls')),
+    path('api/v1/perfil/', include('profile_client.urls')),
 ]

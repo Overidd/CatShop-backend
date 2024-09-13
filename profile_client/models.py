@@ -28,9 +28,9 @@ class UserAddressModel(models.Model):
    department = models.CharField(max_length=100)
    province = models.CharField(max_length=100)
    district = models.CharField(max_length=100)
-   address = models.CharField(max_length=250)
-   street = models.CharField(max_length=100)
-   street_number = models.CharField(max_length=50) 
+   address = models.CharField(max_length=250, null=True)
+   street = models.CharField(max_length=100, null=True)
+   street_number = models.CharField(max_length=50,null=True) 
    reference = models.TextField(null=True)
    user_client = models.ForeignKey(UserClientModel, related_name='user_address' ,on_delete=models.CASCADE)
 
@@ -39,7 +39,7 @@ class UserAddressModel(models.Model):
 
 class UserPaymentMethodModel(models.Model):
    id = models.AutoField(primary_key=True)
-   amount = models.DecimalField(max_digits=10, decimal_places=2, null=False)
+   amount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
    payment_method = models.CharField(max_length=100)
    patment_date = models.DateTimeField(auto_now_add=True)
    user_client = models.ForeignKey(UserClientModel, related_name='user_payment', null=True,on_delete=models.CASCADE)
