@@ -82,7 +82,7 @@ class RegisterOrderSerializer(serializers.Serializer):
     order_identification = OrderIdentificationSerializer()
     order_store = OrderStoreSerializer(required=False)  # Opcional
     order_delivery = OrderDeliverySerializer(required=False)  # Opcional
-    order_payment = OrderPaymentSerializer()
+   #  order_payment = OrderPaymentSerializer()
     order_details = OrderDetailSerializer(many=True)
 
     def validate(self, data):
@@ -92,3 +92,9 @@ class RegisterOrderSerializer(serializers.Serializer):
         if not data.get('order_store') and not data.get('order_delivery'):
             raise serializers.ValidationError("Debe proporcionar 'order_store' o 'order_delivery'.")
         return data
+
+
+class ProcessPaymentSerializer(serializers.Serializer):
+   token_id = serializers.CharField(max_length=100)
+   code_order = serializers.CharField(max_length=100)
+   pass

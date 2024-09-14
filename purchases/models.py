@@ -84,7 +84,8 @@ class OrderPaymentModel(models.Model):
    id = models.AutoField(primary_key=True)
    amount = models.DecimalField(max_digits=10, decimal_places=2, null=False)
    payment_method = models.CharField(max_length=100)
-   patment_date = models.DateTimeField(auto_now_add=True)
+   payment_number = models.CharField(max_length=100, null=True)
+   payment_data = models.DateTimeField(auto_now_add=True)
    order = models.OneToOneField(OrderModel, null=True,on_delete=models.SET_NULL, related_name='order_payment')
 
    class Meta:

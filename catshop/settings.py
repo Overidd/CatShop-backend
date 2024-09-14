@@ -180,3 +180,5 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST')  # Tu correo electrónico
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')  # La contraseña o token de aplicación
+
+API_KEY_CULQI = os.getenv('API_KEY_CULQI')

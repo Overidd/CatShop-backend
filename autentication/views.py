@@ -16,8 +16,14 @@ from .serializers import (
 import random
 
 from django.shortcuts import render
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import CreateAPIView
 
-class UserRegisterView(APIView):
+
+
+class UserRegisterView(CreateAPIView):
+   #  permission_classes = [IsAuthenticated]
+    serializer_class = UserRegisterSerializer
     def post(self, request):
         try:
             serializer = UserRegisterSerializer(data=request.data)
@@ -68,7 +74,8 @@ class UserRegisterView(APIView):
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class VerifyEmailView(APIView): 
+class VerifyEmailView(CreateAPIView): 
+   serializer_class = UserEmailSerializer
    def post(self, request):
       serializer = UserEmailSerializer(data=request.data)
       serializer.is_valid(raise_exception=True)
@@ -129,7 +136,7 @@ class VerifyEmailView(APIView):
                      UserPaymentMethodModel.objects.create(
                         amount=payment.amount,
                         payment_method=payment.payment_method,
-                        payment_data=payment.payment_data, 
+                        payment_number=payment.payment_number, 
                         user_client=user.id,
                      )
                       
@@ -157,7 +164,8 @@ class VerifyEmailView(APIView):
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class UserloginView(APIView):
+class UserloginView(CreateAPIView):
+   serializer_class = UserLoginSerializer
    def post(self, request):
       try:
          serializer  = UserLoginSerializer(data=request.data)
@@ -201,7 +209,8 @@ class UserloginView(APIView):
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class ResendCodeView(APIView):
+class ResendCodeView(CreateAPIView):
+   serializer_class = ResendCodeSerializer
    def post(self, request):
       try:
          serializer = ResendCodeSerializer(data=request.data)
