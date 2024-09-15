@@ -40,12 +40,21 @@ class OrderDeliveryType:
 class OrderPaymentType:
    amount: float
    payment_method: str
+   payment_number: Optional[str]
+   card_type: Optional[str]
+   card_name: Optional[str]
+   country_code: Optional[str]
+   installments: Optional[int]
 
 @dataclass
 class OrderDetailType:
    quantity: int
    price: float
    subtotal: float
+   price_unit:  Optional[float]
+   subtotal: Optional[float]
+   discount: Optional[float]
+   name_product: Optional[str]
    product_id: int
 
 @dataclass

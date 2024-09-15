@@ -3,6 +3,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+import requests
+from django.conf import settings
+
 # Create your views here.
 from purchases.models import (
    OrderModel,
@@ -38,8 +41,7 @@ from .utils import (
    OrderDetailType,
 )
 
-from rest_framework.permissions import IsAuthenticated
-
+from billing.utils import invoicePayments
 
 class RegisterOrderView(APIView):
    def post(self, request, *args, **kwargs):
@@ -75,8 +77,9 @@ class RegisterOrderView(APIView):
          error_products = []
          is_error = False
          total = 0
+         total_discount = 0
 
-          # Obtenemos los productos con el order_details id
+         # Obtenemos los productos con el order_details id
          products = ProductModel.objects.filter(id__in=[order_delail.product_id for order_delail in order_details])
 
          for product in products:
@@ -89,11 +92,13 @@ class RegisterOrderView(APIView):
                   error_products.append(product)
 
                elif is_error == False:
-                  # Calculamos el total y reducimos el stock
-                  total += product.price * order_detail.quantity
+                  discount = product.price * (product.discount / 100)
+                  price = product.price - discount
+                  total_discount += discount
+                  total += (product.price - discount) * order_detail.quantity
 
+                  # Calculamos el total - discount y reducimos el stock
                   product.stock -= order_detail.quantity
-                  
                   if product.stock <= 0:
                      # Deshabilitamos el producto
                      product.status = False
@@ -108,7 +113,7 @@ class RegisterOrderView(APIView):
                   }
                }, status=status.HTTP_400_BAD_REQUEST)
 
-         new_order = OrderModel.objects.create(total=total)
+         new_order = OrderModel.objects.create(total=total, total_discount=total_discount)
 
          OrderIdentificationModel.objects.create(
             email = order_identification.email,
@@ -125,9 +130,17 @@ class RegisterOrderView(APIView):
             order_detail  = next((item for item in order_details  if item.product_id == product.id), None)
 
             if order_detail:
+               discount = product.price * (product.discount / 100)
+               price = product.price - discount
+               subtotal = price *  order_detail.quantity
+
                new_order_detail = OrderDetailModel.objects.create(
                   quantity = order_detail.quantity,
-                  price = product.price,
+                  price_unit = product.price,
+                  price = price,
+                  subtotal = subtotal,
+                  discount = discount,
+                  name_product = product.name,
                   product = product.id,
                   order = new_order.id,
                )
@@ -146,6 +159,7 @@ class RegisterOrderView(APIView):
                   "data": {
                      'code_order': new_order.code,
                      'total': new_order.total,
+                     'total_discount': total_discount,
                      'order_detail': order_details_model
                      # 'user': user.id
                   }
@@ -153,7 +167,7 @@ class RegisterOrderView(APIView):
 
             UserOrderModel.objects.create(order=new_order.id, user_client=user.id)
 
-             # TODO: se podria actualizar la nueva informacion en el perfil del usario
+            # TODO: se podria actualizar la nueva informacion en el perfil del usario
          
          if not isuser.isuser:
             # En caso de que el usuario no este registrado
@@ -196,8 +210,6 @@ class RegisterOrderView(APIView):
          )
       
 
-import requests
-from django.conf import settings
 class ProcessPaymentView(APIView):   
    def post(self, request):
       serializer = ProcessPaymentSerializer(data=request.data)
@@ -236,7 +248,7 @@ class ProcessPaymentView(APIView):
          "currency_code": "PEN",  # Moneda (PEN o USD)
          "email": order_identification.email, # Email del cliente
          "source_id": validated_data['token_id'],  # El token que se generó en el frontend
-         "description": "Pago por servicio",  # Descripción del cargo
+         "description": "Pago por producto",  # Descripción del cargo
          "capture": True, # Indica que la captura sea automatico, (12.00 am) procesa culqi
          "antifraud_details": {
             "address": order_delivery.address,
@@ -260,7 +272,7 @@ class ProcessPaymentView(APIView):
       # Solicitud a la API de Culqi
       try:
          response = requests.post(
-            "https://api.culqi.com/v2/charges",  # Api
+            settings.URL_API_CULQI,  # Api
             json=data,
             headers=headers
          )
@@ -268,23 +280,33 @@ class ProcessPaymentView(APIView):
          response_data = response.json() 
 
          if response.status_code == 201:
-            OrderPaymentModel.objects.create(
+            source = response_data.get('source', {})
+            iin = source.get('iin', {})
+            issuer = iin.get('issuer', {})
+            metadata = source.get('metadata', {})
+    
+            order_payment = OrderPaymentModel.objects.create(
                amount=amount,
-               payment_method=response_data['source']['iin']['card_brand'],
-               payment_number=response_data['source']['card_number'],
+               payment_method=iin.get('card_brand', 'Visa'),
+               payment_number=source.get('card_number', 0),
+               card_type = iin.get('card_type', 'Debito'),
+               card_name = issuer.get('name', None),
+               country_code = issuer.get('country_code', None),
+               installments = metadata.get('installments', 1),
                order=order.id
             )
             order.status = True
-            IGV = order.total * 0.18
-            SIN_IGV = order.total - IGV
             order.save()
 
             # TODO: Enviar email de seguimiento al cliente y administrador
             # TODO: Generar facturacion de los productos comprados y enviar un email al cliente
+            link_pdf_invoice = invoicePayments(order_identification, order_delivery, order_payment, order_details)
 
             return Response({
                "message": "Pago realizado exitosamente",
-               # "data": response_data
+               'data': {
+                  "link_pdf_invoice": link_pdf_invoice
+               }
             }, status=status.HTTP_201_CREATED)
          
          else:

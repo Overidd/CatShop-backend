@@ -70,8 +70,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
       model = OrderDetailModel
       fields = [
          'quantity',
-         'price',
-         'subtotal',
+         'price_unit',
          'product_id',
       ]
 

@@ -182,3 +182,7 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST')  # Tu correo electrónico
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')  # La contraseña o token de aplicación
 
 API_KEY_CULQI = os.getenv('API_KEY_CULQI')
+URL_API_CULQI = os.getenv('URL_API_CULQI')
+
+URL_API_NUBEFACT = os.getenv('URL_API_NUBEFACT')
+API_KEY_NUBEFACT = os.getenv('API_KEY_NUBEFACT')

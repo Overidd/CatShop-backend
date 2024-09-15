@@ -136,7 +136,11 @@ class VerifyEmailView(CreateAPIView):
                      UserPaymentMethodModel.objects.create(
                         amount=payment.amount,
                         payment_method=payment.payment_method,
-                        payment_number=payment.payment_number, 
+                        payment_number=payment.payment_number,
+                        card_type = payment.card_type,
+                        card_name = payment.card_name,
+                        country_code = payment.country_code,
+                        installments  = payment.installments,
                         user_client=user.id,
                      )
                       
