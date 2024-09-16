@@ -40,4 +40,7 @@ urlpatterns = [
 
     # Rutas de generar order y pasarela de pagos
     path('api/v1/order/', include('payment_gateway.urls')),
+
+    # Rutas para los productos
+    path('api/v1/product/', include('product.urls')),
 ]

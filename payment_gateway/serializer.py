@@ -7,6 +7,8 @@ from purchases.models import (
    OrderPaymentModel,
 )
 
+from product.models import ProductModel
+
 # Serializador para "isuser" (opcional)
 class IsUserSerializer(serializers.Serializer):
    isuser = serializers.BooleanField(required=False)
@@ -34,10 +36,8 @@ class OrderIdentificationSerializer(serializers.ModelSerializer):
    
 
 # Serializador para "order_store" (opcional)
-class OrderStoreSerializer(serializers.ModelSerializer):
-   class Meta:
-      model = OrderStoreModel
-      fields = ['store_name']
+class OrderStoreSerializer(serializers.Serializer):
+   store_name = serializers.CharField(required=False)
 
 # Serializador para "order_delivery" (opcional)
 class OrderDeliverySerializer(serializers.ModelSerializer):
@@ -63,16 +63,10 @@ class OrderPaymentSerializer(serializers.ModelSerializer):
       ]
 
 # Serializador para "order_details"
-class OrderDetailSerializer(serializers.ModelSerializer):
+class OrderDetailSerializer(serializers.Serializer):
+   quantity = serializers.IntegerField()
+   price_unit = serializers.FloatField()
    product_id = serializers.IntegerField()  # Solo recibirá el ID del producto
-
-   class Meta:
-      model = OrderDetailModel
-      fields = [
-         'quantity',
-         'price_unit',
-         'product_id',
-      ]
 
 # Serializador principal
 class RegisterOrderSerializer(serializers.Serializer):
@@ -81,7 +75,7 @@ class RegisterOrderSerializer(serializers.Serializer):
     order_identification = OrderIdentificationSerializer()
     order_store = OrderStoreSerializer(required=False)  # Opcional
     order_delivery = OrderDeliverySerializer(required=False)  # Opcional
-   #  order_payment = OrderPaymentSerializer()
+    order_payment = OrderPaymentSerializer(required=False)  # Opcional
     order_details = OrderDetailSerializer(many=True)
 
     def validate(self, data):
@@ -92,8 +86,18 @@ class RegisterOrderSerializer(serializers.Serializer):
             raise serializers.ValidationError("Debe proporcionar 'order_store' o 'order_delivery'.")
         return data
 
-
 class ProcessPaymentSerializer(serializers.Serializer):
    token_id = serializers.CharField(max_length=100)
    code_order = serializers.CharField(max_length=100)
+   is_user_id = serializers.IntegerField(required=False, allow_null=True, default=None)
    pass
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderDetailModel
+        fields = '__all__'
+
+class ProductModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductModel
+        fields = '__all__'

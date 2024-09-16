@@ -39,7 +39,7 @@ class UserAddressModel(models.Model):
 
 class UserPaymentMethodModel(models.Model):
    id = models.AutoField(primary_key=True)
-   amount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+   amount = models.FloatField(null=True)
    payment_method = models.CharField(max_length=100)
    payment_number = models.CharField(max_length=100, null=True)
    card_type = models.CharField(max_length=100, null=True)

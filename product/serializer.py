@@ -1,7 +1,9 @@
 
 from rest_framework.serializers import ModelSerializer
-from .models import ProductCategoryModel
-
+from .models import (
+   ProductModel,
+   ProductCategoryModel
+)
 
 class ProductCategorySerializer(ModelSerializer):
 
@@ -14,5 +16,8 @@ class ProductCategorySerializer(ModelSerializer):
       representation['image'] = instance.image.url
       return representation
       
-      
 
+class ProductSerializer(ModelSerializer): 
+   class Meta:
+      model = ProductModel
+      fields = '__all__'

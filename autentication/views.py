@@ -114,9 +114,9 @@ class VerifyEmailView(CreateAPIView):
                user.phone = identification.phone
                user.ruc = identification.ruc
                user.save()
-               
+
                # Crear la dirección del usuario
-               if latest_order.order_delivery:
+               if hasattr(latest_order, 'order_delivery') and latest_order.order_delivery:
                   address = latest_order.order_delivery
                   UserAddressModel.objects.create(
                      department=address.department,
@@ -131,7 +131,7 @@ class VerifyEmailView(CreateAPIView):
 
                # Guardar los métodos de pago y pedidos
                for order in orders:
-                  if order.order_payment:
+                  if hasattr(order, 'order_payment') and order.order_payment:
                      payment = order.order_payment
                      UserPaymentMethodModel.objects.create(
                         amount=payment.amount,
@@ -141,12 +141,12 @@ class VerifyEmailView(CreateAPIView):
                         card_name = payment.card_name,
                         country_code = payment.country_code,
                         installments  = payment.installments,
-                        user_client=user.id,
+                        user_client=user,
                      )
                       
                   UserOrderModel.objects.create(
-                     order=order.id,
-                     user_client=user.id
+                     order=order,
+                     user_client=user
                   )
                
          return Response({

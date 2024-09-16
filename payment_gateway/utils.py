@@ -49,13 +49,13 @@ class OrderPaymentType:
 @dataclass
 class OrderDetailType:
    quantity: int
-   price: float
-   subtotal: float
    price_unit:  Optional[float]
-   subtotal: Optional[float]
-   discount: Optional[float]
-   name_product: Optional[str]
    product_id: int
+   # price: Optional[float]
+   # subtotal: Optional[float]
+   # subtotal: Optional[float]
+   # discount: Optional[float]
+   # name_product: Optional[str]
 
 @dataclass
 class RegisterOrderData:
