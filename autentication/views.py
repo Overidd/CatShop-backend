@@ -15,10 +15,7 @@ from .serializers import (
 )
 import random
 
-from django.shortcuts import render
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import CreateAPIView
-
 
 
 class UserRegisterView(CreateAPIView):

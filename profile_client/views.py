@@ -56,8 +56,6 @@ class GetallFavoriteView(ListAPIView):
             'error': str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-
 class DestroyFavoriteView(DestroyAPIView):
    queryset = UserFavoritesModel.objects.all()
    serializer_class = UserFavoritesSerializer
