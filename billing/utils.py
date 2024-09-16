@@ -24,39 +24,43 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
          total_gravada = 0
          igv_total = 0
          total_price = 0
+
          for detail in order_details:
             discount = detail.discount
-            # Calcular valor unitario sin IGV
+            
+             # Calcular valor unitario sin IGV
             valor_unitario = detail.price_unit / 1.18
+            
+            subtotal = (valor_unitario - discount) * detail.quantity
 
-            # Calcular IGV
-            igv = round(valor_unitario * 0.18, 2)
+            # Calcular IGV sobre el subtotal (que ya tiene descuento aplicado)
+            igv = round(subtotal * 0.18, 2)
 
-            # Calcular subtotal y total
-            subtotal = (valor_unitario * detail.quantity) - discount
-            total = detail.price_unit * detail.quantity
+            # Calcular total del producto (subtotal + IGV)
+            total = (detail.price_unit - discount) * detail.quantity
 
-            discount_total += discount
-            total_gravada += valor_unitario * detail.quantity
-            igv_total += igv * detail.quantity
-            total_price += total - discount
+            # Acumulación de valores
+            discount_total += discount * detail.quantity
+            total_gravada += subtotal
+            igv_total += igv
+            total_price += total
 
             item = {
                'unidad_de_medida': 'NIU',
                'descripcion': detail.name_product,
                'cantidad': detail.quantity,
-               # 'codigo': 'C001', # Opcional
-               'valor_unitario': valor_unitario,  # Obligatorio, Valor sin IGV
-               'precio_unitario': detail.price_unit, # Obligatorio, Valor con IGV
-               'descuento': discount,
-               'subtotal': subtotal, # Obligatorio, Resultado de VALOR UNITARIO por la CANTIDAD menos el DESCUENTO
+               'codigo': detail.code or '',  # Asegúrate de que el código no sea None
+               'valor_unitario': valor_unitario,  # Sin IGV
+               'precio_unitario': detail.price_unit,  # Valor con IGV original
+               'descuento': (discount / 1.18) * detail.quantity,  # Total del descuento por cantidad ojo nubefact suma un igv por el descuento, razon primero le envio sin el igv 
+               'subtotal': subtotal,  # Resultado de VALOR UNITARIO por la CANTIDAD menos el DESCUENTO
                'tipo_de_igv': 1,
-               'igv': round(igv * detail.quantity, 2),
-               'total': total, # Total del producto
+               'igv': igv,
+               'total': total,  # Total del producto con IGV
                'anticipo_regularizacion': False
             }
-            items.append(item)
 
+            items.append(item)
          # Agregar el costo de delivery, si existe
          if order.price_delivery > 0:
             delivery_price = order.price_delivery
@@ -71,6 +75,7 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
                'unidad_de_medida': 'ZZ',
                'descripcion': 'Costo de Envío',
                'cantidad': 1,
+               'codigo': '0001',
                'valor_unitario': valor_unitario_delivery,
                'precio_unitario': delivery_price,
                'descuento': 0,
@@ -89,8 +94,7 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
 
          venta_al_credito = []
          date = datetime.now()
-         price_quotas = total_price / order_payment.installments, 2
-         print(price_quotas)
+         price_quotas = total_price / order_payment.installments
          if order_payment.installments > 1:
             for i in range(1, order_payment.installments + 1):
                 next_month = date + relativedelta(months=i)
@@ -119,7 +123,6 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
             'fecha_de_emision': datetime.now().strftime('%d-%m-%Y'),
             'moneda': 1,  # 1:Soles, 2:Dolares 
             'porcentaje_de_igv': 18.0,
-            "descuento_global": discount_total,# Descuento global
             "total_descuento": discount_total, # Total descuento
             'total_gravada': total_gravada,
             'total_igv': igv_total,

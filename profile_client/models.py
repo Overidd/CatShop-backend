@@ -32,7 +32,7 @@ class UserAddressModel(models.Model):
    street = models.CharField(max_length=100, null=True)
    street_number = models.CharField(max_length=50,null=True) 
    reference = models.TextField(null=True)
-   user_client = models.ForeignKey(UserClientModel, related_name='user_address' ,on_delete=models.CASCADE)
+   user_client = models.OneToOneField(UserClientModel, related_name='user_address' ,on_delete=models.CASCADE)
 
    class Meta:
       db_table = 'user_address'

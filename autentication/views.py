@@ -126,7 +126,7 @@ class VerifyEmailView(CreateAPIView):
                      street=address.street,
                      street_number=address.street_number,
                      reference=address.reference,
-                     user_client=user.id
+                     user_client=user
                   )
 
                # Guardar los métodos de pago y pedidos

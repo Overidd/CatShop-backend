@@ -25,6 +25,7 @@ from profile_client.models import (
    UserClientModel,
    UserOrderModel,
    UserPaymentMethodModel,
+   UserAddressModel,
 )
 
 from product.models import (
@@ -101,9 +102,8 @@ class RegisterOrderView(CreateAPIView):
                   error_products_unserialized.append(product)
 
                elif is_error == False:
-                  discount = product.price * (product.discount / 100)
-                  # price = product.price - discount
-                  total_discount += discount
+                  discount = round(product.price * (product.discount / 100), 2)
+                  total_discount += discount * order_detail.quantity
                   total += (product.price - discount) * order_detail.quantity
 
                   # Calculamos el total - discount y reducimos el stock
@@ -124,13 +124,13 @@ class RegisterOrderView(CreateAPIView):
                }, status=status.HTTP_400_BAD_REQUEST)
 
          new_order = OrderModel.objects.create(
-            total=total, 
-            total_discount=total_discount,
+            total=round(total,2), 
+            total_discount=round(total_discount,2),
          )
 
          is_order_store, is_order_delivery = self.registerOpcionOrder(opciones_entrega, order_store, order_delivery, new_order)
          if is_order_delivery:
-            #TODO: Se asignar manualmente el precio por delivery en
+            #TODO: Se asignar manualmente el precio por delivery en 20
             price_delivery = 20
 
          new_code = 'order-'+ hashids.encode(new_order.id)
@@ -147,33 +147,35 @@ class RegisterOrderView(CreateAPIView):
             ruc = order_identification.ruc,
             order = new_order,
          )
-          # Generar los OrderDetails
+
+         # Generar los OrderDetails
          order_details_unserialized = []
          for product in products:
             order_detail  = next((item for item in order_details  if item.product_id == product.id), None)
 
             if order_detail:
-               discount = product.price * (product.discount / 100)
-               price = product.price - discount
-               subtotal = price * order_detail.quantity
+               discount = round(product.price * (product.discount / 100), 2)
+               price_final = product.price - discount
+               subtotal = price_final * order_detail.quantity
 
                new_order_detail = OrderDetailModel.objects.create(
                   quantity = order_detail.quantity,
                   price_unit = product.price,
-                  price = price,
-                  subtotal = subtotal,
+                  price_final = round(price_final,2),
+                  subtotal = round(subtotal,2),
                   discount = discount,
                   name_product = product.name,
                   product = product,
                   order = new_order,
                )
+               new_order_detail.code = 'detail-'+ hashids.encode(new_order_detail.id)
                order_details_unserialized.append(new_order_detail)
 
          order_details_data = OrderDetailSerializer(order_details_unserialized, many=True).data
 
          if isuser.isuser:
             # TODO: validar el token
-            #? Vericiar si el usuario es valido
+            #? Verificar si el usuario es valido
             user = UserClientModel.objects.filter(id=isuser.id_user ,email=isuser.email).first()
             if not user:
                OrderUserTempModel.objects.create(email=isuser.email ,order=new_order)
@@ -184,9 +186,8 @@ class RegisterOrderView(CreateAPIView):
                      'total': new_order.total,
                      'total_general': new_order.total + price_delivery ,
                      'price_delivery': price_delivery,
-                     'total_discount': total_discount,
-                     'order_detail': order_details_data
-                     # 'user': user.id
+                     'total_discount': new_order.total_discount,
+                     'order_detail': order_details_data,
                   }
                }, status=status.HTTP_201_CREATED)
 
@@ -195,17 +196,31 @@ class RegisterOrderView(CreateAPIView):
                user_client=user,
             )
 
-            # TODO: se podria actualizar la nueva informacion en el perfil del usario      
-            user_address = user.user_address
+            # TODO: Se actualiza la nueva informacion en el perfil del usario      
             
-            user_address.department = order_delivery.department
-            user_address.province = order_delivery.province
-            user_address.district = order_delivery.district
-            user_address.address = order_delivery.address
-            user_address.street = order_delivery.street
-            user_address.street_number = order_delivery.street_number
-            user_address.reference = order_delivery.reference
-            user_address.save()
+            if hasattr(user, 'user_address') and user.user_address:
+               user_address = user.user_address
+               user_address.department = order_delivery.department
+               user_address.province = order_delivery.province
+               user_address.district = order_delivery.district
+               user_address.address = order_delivery.address
+               user_address.street = order_delivery.street
+               user_address.street_number = order_delivery.street_number
+               user_address.reference = order_delivery.reference
+               user_address.save()
+            else:
+               # Crear una nueva dirección
+               UserAddressModel.objects.create(
+                  user_client=user,
+                  department=order_delivery.department,
+                  province=order_delivery.province,
+                  district=order_delivery.district,
+                  address=order_delivery.address,
+                  street=order_delivery.street,
+                  street_number=order_delivery.street_number,
+                  reference=order_delivery.reference,
+               )
+
          
          if not isuser.isuser:
             # En caso de que el usuario no este registrado
@@ -214,7 +229,6 @@ class RegisterOrderView(CreateAPIView):
                order=new_order
             )
          
-         
          return Response({
             "message": "Orden registrada exitosamente",
             "data": {
@@ -222,8 +236,8 @@ class RegisterOrderView(CreateAPIView):
                'total': new_order.total,
                'total_general': new_order.total + price_delivery ,
                'price_delivery': price_delivery,
-               'total_discount': total_discount,
-               'order_detail': order_details_data
+               'total_discount': new_order.total_discount,
+               'order_detail': order_details_data,
                # 'user': user.id
             }
          }, status=status.HTTP_201_CREATED)
