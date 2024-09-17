@@ -114,6 +114,7 @@ class VerifyEmailView(CreateAPIView):
 
                # Crear la dirección del usuario
                if hasattr(latest_order, 'order_delivery') and latest_order.order_delivery:
+                  # print
                   address = latest_order.order_delivery
                   UserAddressModel.objects.create(
                      department=address.department,

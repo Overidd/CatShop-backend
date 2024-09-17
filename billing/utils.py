@@ -40,7 +40,7 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
             total = (detail.price_unit - discount) * detail.quantity
 
             # Acumulación de valores
-            discount_total += discount * detail.quantity
+            discount_total += (discount + (discount * 0.18) ) * detail.quantity
             total_gravada += subtotal
             igv_total += igv
             total_price += total

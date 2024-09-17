@@ -8,6 +8,7 @@ import requests
 from django.conf import settings
 from hashids import Hashids
 hashids = Hashids(salt="sdf78Pxq34lZsada", min_length=6)
+
 import uuid
 
 # Create your views here.
@@ -169,6 +170,7 @@ class RegisterOrderView(CreateAPIView):
                   order = new_order,
                )
                new_order_detail.code = 'detail-'+ hashids.encode(new_order_detail.id)
+               new_order_detail.save()
                order_details_unserialized.append(new_order_detail)
 
          order_details_data = OrderDetailSerializer(order_details_unserialized, many=True).data
@@ -280,7 +282,7 @@ class RegisterOrderView(CreateAPIView):
 
 class IsOrderDelivery:
    def __init__(self, address, department):
-      self.address = address
+      self.address = address if address !='none' or address else "Tienda"
       self.department = department
 
 
@@ -306,14 +308,12 @@ class ProcessPaymentView(APIView):
       # Acceder a las relaciones OneToOne
       order_identification = order.order_identification
 
-      order_delivery = IsOrderDelivery('tienda', 'tienda')
+      order_delivery = IsOrderDelivery('Tienda', 'Tienda')
       if hasattr(order, 'order_store') and order.order_store:
-         store = order.order_store 
-
-         order_delivery = IsOrderDelivery(store.store_name, '')
+         order_delivery = IsOrderDelivery(order.order_store, '')
 
       if hasattr(order, 'order_delivery') and order.order_delivery:
-         order_delivery = order.order_delivery
+         order_delivery = IsOrderDelivery(order.order_delivery, '')
 
       if not order_identification or not order_delivery:
          return Response({
@@ -321,7 +321,7 @@ class ProcessPaymentView(APIView):
          }, status=status.HTTP_400_BAD_REQUEST)
 
       amount = int((order.total * 100) + order.price_delivery)  # Convertir a céntimos, por ejemplo, 100.00 soles -> 10000 céntimos
-
+      # print(order_delivery.address, 'order_delivery')
       # Crear el payload para la solicitud a Culqi
       data = {
          "amount": amount,  # El monto en céntimos 
