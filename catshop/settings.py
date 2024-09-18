@@ -47,6 +47,7 @@ EXTERNAL_APPS = [
     'cloudinary',
     'rest_framework_simplejwt',
     'drf_yasg',
+    'django_filters',
 ]
 
 CATS_SHOP_APP = [
@@ -161,7 +162,9 @@ config(
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+
 }
 
 # Configuracion de JWT Authorization, el tiendo de duracion

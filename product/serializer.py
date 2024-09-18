@@ -5,6 +5,7 @@ from .models import (
    ProductModel,
    ProductCategoryModel,
    ProductDetailModel,
+   ProductImageModel
 )
 
 class ProductCategorySerializer(ModelSerializer):
@@ -17,12 +18,47 @@ class ProductCategorySerializer(ModelSerializer):
       representation = super().to_representation(instance)
       representation['image'] = instance.image.url
       return representation
-      
-
+   
 class ProductSerializer(ModelSerializer): 
    class Meta:
       model = ProductModel
       fields = '__all__'
+
+
+   def to_representation(self, instance):
+      representation = super().to_representation(instance)
+      representation['brand'] = instance.brand.name if instance.brand else None
+      representation['category'] = instance.category.name if instance.category else None
+      return representation
+
+class ProductDetailSerializer(ModelSerializer):
+   class Meta:
+      model = ProductDetailModel
+      fields = '__all__'
+
+class ProductListSerializer(ModelSerializer): 
+   image = serializers.SerializerMethodField()
+
+   class Meta:
+      model = ProductModel
+      fields = '__all__'
+
+   def get_image(self, obj):
+      # Filtrar las imágenes del producto actual y obtener la que tiene default=True
+      imag = ProductImageModel.objects.filter(product=obj, default=True).first()
+      if imag:
+         return imag.image.url  
+      return None  # Si no hay imagen por defecto, retornar None
+
+class ProductImageSerializer(ModelSerializer):
+   class Meta:
+      model = ProductImageModel
+      fields = '__all__'
+
+   def to_representation(self, instance):
+      representation = super().to_representation(instance)
+      representation['image'] = instance.image.url
+      return representation
 
 class MultiImageSerializer(serializers.Serializer):
    images = serializers.ListField(
@@ -52,8 +88,8 @@ class CreateProductSerializer(serializers.Serializer):
    extra = serializers.CharField(max_length=200, required=False, allow_null=True)
 
    images = serializers.ListField(
-        child=serializers.ImageField(),
-        required=False
+      child=serializers.ImageField(),
+      required=False
    )
 
    def to_representation(self, instance):
@@ -62,7 +98,6 @@ class CreateProductSerializer(serializers.Serializer):
       
       # Excluir el campo 'images'
       representation.pop('images', None)
-      
       return representation
    
 class UpdateProductSerializer(serializers.Serializer):
@@ -81,7 +116,6 @@ class UpdateProductSerializer(serializers.Serializer):
    characteristics = serializers.CharField(required=False, allow_null=True, allow_blank=True)
    extra = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
 
-
    images = serializers.ListField(
         child=serializers.ImageField(),
         required=False
@@ -90,7 +124,17 @@ class UpdateProductSerializer(serializers.Serializer):
    ids_destroy_images = serializers.ListField(
       child=serializers.IntegerField(), 
       required=False,  
-      allow_empty=True  # Permite que la lista esté vacía
+      allow_empty=True  # Permite que el array de id de imagenes esté vacía
    )
 
    default_image_id = serializers.IntegerField(required=False, allow_null=True) 
+
+class ByIdproductSerializer(serializers.Serializer):
+   product = ProductSerializer()
+   details = ProductDetailSerializer()
+   images = ProductImageSerializer(many=True)
+
+
+class VerifyQuantitySerializer(serializers.Serializer):
+   id_product = serializers.IntegerField(required=True)
+   quantity = serializers.IntegerField(required=True)

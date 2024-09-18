@@ -15,10 +15,9 @@ from .serializers import (
 )
 import random
 
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import GenericAPIView
 
-
-class UserRegisterView(CreateAPIView):
+class UserRegisterView(GenericAPIView):
    #  permission_classes = [IsAuthenticated]
     serializer_class = UserRegisterSerializer
     def post(self, request):
@@ -71,7 +70,7 @@ class UserRegisterView(CreateAPIView):
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class VerifyEmailView(CreateAPIView): 
+class VerifyEmailView(GenericAPIView): 
    serializer_class = UserEmailSerializer
    def post(self, request):
       serializer = UserEmailSerializer(data=request.data)
@@ -166,7 +165,7 @@ class VerifyEmailView(CreateAPIView):
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class UserloginView(CreateAPIView):
+class UserloginView(GenericAPIView):
    serializer_class = UserLoginSerializer
    def post(self, request):
       try:
@@ -211,7 +210,7 @@ class UserloginView(CreateAPIView):
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class ResendCodeView(CreateAPIView):
+class ResendCodeView(GenericAPIView):
    serializer_class = ResendCodeSerializer
    def post(self, request):
       try:
