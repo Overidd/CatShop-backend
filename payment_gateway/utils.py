@@ -5,8 +5,8 @@ from typing import Optional, List
 class IsUserType:
    isuser: Optional[bool]
    token: Optional[str]
-   id_user: Optional[int]
-   email: Optional[str]
+   # id_user: Optional[int]
+   # email: Optional[str]
 
 @dataclass
 class OrderType:

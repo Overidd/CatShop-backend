@@ -6,9 +6,9 @@ from rest_framework import status
 
 import requests
 from django.conf import settings
+
 from hashids import Hashids
 hashids = Hashids(salt="sdf78Pxq34lZsada", min_length=6)
-
 import uuid
 
 # Create your views here.
@@ -42,16 +42,15 @@ from .serializer import (
 
 from .utils import (
    IsUserType,
-   OrderType,
    OrderIdentificationType,
    OrderStoreType,
    OrderDeliveryType,
-   OrderPaymentType,
    OrderDetailType,
 )
 
 from billing.utils import invoicePayments
 from django.core.mail import send_mail
+from autentication.utils import decode_jwt_token
 
 class RegisterOrderView(CreateAPIView):
    serializer_class = RegisterOrderSerializer
@@ -177,8 +176,12 @@ class RegisterOrderView(CreateAPIView):
 
          if isuser.isuser:
             # TODO: validar el token
+            token_user = decode_jwt_token(isuser.token)
+            user_id = token_user.get('user_id')
+            email = token_user.get('email')
+
             #? Verificar si el usuario es valido
-            user = UserClientModel.objects.filter(id=isuser.id_user ,email=isuser.email).first()
+            user = UserClientModel.objects.filter(id=user_id ,email=email).first()
             if not user:
                OrderUserTempModel.objects.create(email=isuser.email ,order=new_order)
                return Response({
@@ -199,7 +202,6 @@ class RegisterOrderView(CreateAPIView):
             )
 
             # TODO: Se actualiza la nueva informacion en el perfil del usario      
-            
             if hasattr(user, 'user_address') and user.user_address:
                user_address = user.user_address
                user_address.department = order_delivery.department
