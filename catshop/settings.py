@@ -191,3 +191,7 @@ URL_API_CULQI = os.getenv('URL_API_CULQI')
 
 URL_API_NUBEFACT = os.getenv('URL_API_NUBEFACT')
 API_KEY_NUBEFACT = os.getenv('API_KEY_NUBEFACT')
+
+STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
