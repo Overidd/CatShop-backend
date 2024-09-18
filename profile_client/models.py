@@ -2,8 +2,24 @@ from django.db import models
 from cloudinary.models import CloudinaryField
 from purchases.models import OrderModel
 from product.models import ProductModel
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-class UserClientModel(models.Model):
+class UserManager(BaseUserManager):
+   def create_user(self, email, password, **extra_fields):
+      if not email:
+         raise ValueError('Email required')
+     
+      email = self.normalize_email(email)
+      user = self.model(
+         email = email,
+         **extra_fields
+      )
+
+      user.set_password(password)
+      user.save(using=self._db)
+      return user
+
+class UserClientModel(AbstractBaseUser):
    id = models.AutoField(primary_key=True)
    name = models.CharField(max_length=200)
    image = CloudinaryField('image', folder='user_client/')
@@ -18,6 +34,10 @@ class UserClientModel(models.Model):
    status = models.BooleanField(default=True)
    created_at = models.DateTimeField(auto_now_add=True)
    updated_at = models.DateTimeField(auto_now=True)
+
+   objects = UserManager()
+   USERNAME_FIELD = 'email'
+   REQUIRED_FIELDS = []
 
    class Meta:
       db_table = 'user_client'

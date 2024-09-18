@@ -1,10 +1,13 @@
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import status
 from rest_framework.generics import (
    CreateAPIView,
    DestroyAPIView,
    ListAPIView,
-   UpdateAPIView
+   UpdateAPIView,
+   RetrieveAPIView
 )
 from .models import (
    UserFavoritesModel,
@@ -18,12 +21,15 @@ from .serializers import (
    UserAddressSerializer
 )
 
+from autentication.utils import decode_jwt_token
+
 #* Importamos el model product
 from product.models import ProductModel
 
 class GetallFavoriteView(ListAPIView):
    queryset = UserFavoritesModel.objects.all()
    serializer_class = UserFavoritesSerializer
+   permission_classes = [IsAuthenticated]  # Para la autenticación
 
    def list(self, request, *args, **kwargs):
       try:
@@ -59,6 +65,7 @@ class GetallFavoriteView(ListAPIView):
 class DestroyFavoriteView(DestroyAPIView):
    queryset = UserFavoritesModel.objects.all()
    serializer_class = UserFavoritesSerializer
+   permission_classes = [IsAuthenticated]  # Para la autenticación
 
    def destroy(self, request, *args, **kwargs):
       try:
@@ -102,6 +109,7 @@ class CreateFavoriteView(CreateAPIView):
 class GetUserByIdView(ListAPIView):
    queryset = UserClientModel.objects.all()
    serializer_class = UserDetailSerializer
+   permission_classes = [IsAuthenticated]  # Para la autenticación
 
    def get(self, request, *args, **kwargs):
       try:
@@ -145,6 +153,7 @@ class GetUserByIdView(ListAPIView):
 class UpdateUserClient(UpdateAPIView):
    queryset = UserClientModel.objects.all()
    serializer_class = UserClientSerializer
+   permission_classes = [IsAuthenticated]  # Para la autenticación
    
    def update(self, request, *args, **kwargs):
       try:
@@ -171,6 +180,7 @@ class UpdateUserClient(UpdateAPIView):
 class UpdateUserAddress(UpdateAPIView):
    queryset = UserAddressModel.objects.all()
    serializer_class = UserAddressSerializer
+   permission_classes = [IsAuthenticated]  # Para la autenticación
 
    def update(self, request, *args, **kwargs):
       try:
@@ -187,6 +197,86 @@ class UpdateUserAddress(UpdateAPIView):
             'error': str(e)
          }, status=status.HTTP_404_NOT_FOUND)
         
+      except Exception as e:
+         return Response({
+            'message': 'Ocurrió un error inesperado',
+            'error': str(e)
+         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GetUserAddressView(ListAPIView):
+   queryset = UserAddressModel.objects.all()
+   serializer_class = UserAddressSerializer
+   permission_classes = [IsAuthenticated]  # Para la autenticación
+
+   def list(self, request, *args, **kwargs):
+      try:
+         token = request.headers.get('Authorization', None)
+         # print(token)
+         if not token:
+            return Response({
+               'message': 'se requiere Token de usuario'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+         
+         # Decodificar token
+         token_user = decode_jwt_token(token)
+         print(token_user, 'token_user')
+
+         # Extraer datos del token
+         user_id = token_user.get('user_id', None)
+
+         user_address = self.queryset.get(user_client_id=user_id)
+         
+         return Response({
+            'message': 'Get user address successfully',
+            'data': user_address
+         }, status=status.HTTP_200_OK)
+
+      except UserAddressModel.DoesNotExist:
+         return Response({
+            'message': 'El usuario no cuenta con los datos de direccion'
+         }, status=status.HTTP_404_NOT_FOUND)
+
+      except Exception as e:
+         return Response({
+            'message': 'Ocurrió un error inesperado',
+            'error': str(e)
+         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+      
+class GetUserIdentificationView(ListAPIView):
+   queryset = UserClientModel.objects.all()
+   serializer_class = UserClientSerializer
+   permission_classes = [IsAuthenticated]  # Para la autenticación
+
+   def get(self, request, *args, **kwargs):
+      try:
+         print('-------')
+         token = request.headers.get('Authorization', None)
+         if not token:
+            return Response({
+               'message': 'se requiere Token de usuario'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+         
+         # Decodificar token
+         print(token,'token')
+         token_user = decode_jwt_token(token)
+         user_id = token_user.get('user_id')
+         email = token_user.get('email')
+
+         print(user_id, email)
+         user_client = self.queryset.get(id=user_id, email=email)
+         
+         return Response({
+            'message': 'Get user client successfully',
+            'data': user_client
+         }, status=status.HTTP_200_OK)
+      
+      except UserClientModel.DoesNotExist:
+         return Response({
+            'message': 'Usuario no encontrado'
+         }, status=status.HTTP_404_NOT_FOUND)
+      
       except Exception as e:
          return Response({
             'message': 'Ocurrió un error inesperado',

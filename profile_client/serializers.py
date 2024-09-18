@@ -44,3 +44,4 @@ class UserDetailSerializer(ModelSerializer):
         model = UserClientModel
         fields = '__all__'
     
+ 

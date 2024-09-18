@@ -6,6 +6,8 @@ from .views import (
    GetUserByIdView,
    UpdateUserClient,
    UpdateUserAddress,
+   GetUserAddressView,
+   GetUserIdentificationView,
 )
 
 urlpatterns = [
@@ -17,4 +19,7 @@ urlpatterns = [
    path('user/<int:pk>/', GetUserByIdView.as_view()),
    path('user/update/<int:pk>/', UpdateUserClient.as_view()),
    path('user/address/update/<int:pk>/', UpdateUserAddress.as_view()),
+
+   path('address/', GetUserAddressView.as_view()),
+   path('identification/', GetUserIdentificationView.as_view()),
 ]

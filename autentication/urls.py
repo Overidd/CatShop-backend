@@ -3,7 +3,7 @@ from .views import (
    UserRegisterView,
    VerifyEmailView,
    UserloginView,
-   ResendCodeView
+   ResendCodeView,
 )
 
 urlpatterns = [

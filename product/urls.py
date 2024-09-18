@@ -6,7 +6,7 @@ from .views import (
    ProductListAllView,
    UpdateProductView,
    GetByIdProduct,
-   IsActiveProduc
+   IsActiveProduc,
 )
 
 urlpatterns = [

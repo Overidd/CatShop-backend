@@ -18,7 +18,6 @@ import random
 from rest_framework.generics import GenericAPIView
 
 class UserRegisterView(GenericAPIView):
-   #  permission_classes = [IsAuthenticated]
     serializer_class = UserRegisterSerializer
     def post(self, request):
         try:
