@@ -80,7 +80,7 @@ ROOT_URLCONF = 'catshop.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # Ubicación de la carpeta de plantillas
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -165,8 +165,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
-
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 # Indicamos que el model UserClientModel sera el model por defect
 AUTH_USER_MODEL = 'profile_client.UserClientModel'

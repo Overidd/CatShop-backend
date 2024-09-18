@@ -1,7 +1,6 @@
 from rest_framework.response import Response
 from rest_framework import status, serializers
 from django.db import transaction
-from rest_framework.views import APIView
 
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -14,8 +13,7 @@ from rest_framework.generics import (
    ListCreateAPIView,
    CreateAPIView,
    UpdateAPIView,
-   ListAPIView,
-   
+   ListAPIView,  
 )
 
 from .models import (
@@ -26,7 +24,6 @@ from .models import (
 )
 
 from .serializer import (
-   ProductCategorySerializer,
    ProductSerializer,
    CreateProductSerializer,
    UpdateProductSerializer,

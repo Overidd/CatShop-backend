@@ -51,9 +51,12 @@ from .utils import (
 from billing.utils import invoicePayments
 from django.core.mail import send_mail
 from autentication.utils import decode_jwt_token
+from django.db import transaction
 
 class RegisterOrderView(CreateAPIView):
    serializer_class = RegisterOrderSerializer
+   
+   @transaction.atomic
    def post(self, request, *args, **kwargs):
       serializer = RegisterOrderSerializer(data=request.data)
       try:
@@ -83,6 +86,7 @@ class RegisterOrderView(CreateAPIView):
          order_details = [
             OrderDetailType(**item) for item in order_details_validate
          ]
+
          error_products_unserialized = []
          is_error = False
          total = 0
@@ -92,6 +96,12 @@ class RegisterOrderView(CreateAPIView):
          # Obtenemos los productos con el order_details id
          products = ProductModel.objects.filter(id__in=[order_delail.product_id for order_delail in order_details])
          
+         if not products.exists():
+            return Response({
+               'message': 'No hay productos disponibles',
+               'data': []
+            }, status=status.HTTP_404_NOT_FOUND)
+
          for product in products:
             order_detail  = next((item for item in order_details  if item.product_id == product.id), None)
 
@@ -242,12 +252,10 @@ class RegisterOrderView(CreateAPIView):
                'price_delivery': price_delivery,
                'total_discount': new_order.total_discount,
                'order_detail': order_details_data,
-               # 'user': user.id
             }
          }, status=status.HTTP_201_CREATED)
       
       except Exception as e:
-
          return Response({
             "message": "Ocurrió un error inesperado",
             "error": str(e)

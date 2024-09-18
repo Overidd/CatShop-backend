@@ -1,78 +1,149 @@
 from django.contrib.auth.hashers import check_password
+from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from django.core.mail import send_mail
-
+from django.template.loader import render_to_string # Para renderizar contenido html
+from django.db import transaction
 from profile_client.models import UserClientModel
+
 from purchases.models import OrderModel, OrderUserTempModel
+
 from profile_client.models import (
-   UserClientModel, UserAddressModel, UserPaymentMethodModel, UserOrderModel
+   UserClientModel, 
+   UserAddressModel, 
+   UserPaymentMethodModel, 
+   UserOrderModel
 )
 
 from .serializers import (
-   UsertokenSerializer, UserEmailSerializer, UserRegisterSerializer, UserLoginSerializer, ResendCodeSerializer
+   UsertokenSerializer,
+   UserEmailSerializer, 
+   UserRegisterSerializer, 
+   UserLoginSerializer, 
+   ResendCodeSerializer
 )
-import random
 
-from rest_framework.generics import GenericAPIView
+from catshop.response import (
+   UserRegisterResponse,
+   BAD_REQUEST,
+   ERROR_SERVER,
+   NOT_FOUND,
+   ResponseTokenUser
+)
+
+import random
+from drf_yasg.utils import swagger_auto_schema
+
+
+def email_code_verification(user, verification_code):
+   subject = f'Hola {user.name}, Confirma tu cuenta CatShop'
+   recipient = [user.email]
+   html_verification_code = render_to_string('catShop_codigo_verificacion.html', {
+      'name': user.name,
+      'email': user.email,
+      'code': verification_code
+   })
+
+   send_mail(
+      subject,
+      '',  # Mensaje de texto plano
+      'noreply@localhost.com',  # Remitente
+      recipient,  # Destinatario
+      html_message=html_verification_code,  # Mensaje en HTML
+      fail_silently=False
+   )
+
+def email_welcome(user):
+   subject = f'Hola {user.name}, Bienvenido a CatShop'
+   recipient = [user.email]
+   html_welcome = render_to_string('catShop_codigo_verificacion.html', {
+      'name': user.name
+   }) # Rendizar el html
+
+   send_mail(
+      subject,
+      '',
+      'noreply@localhost.com', 
+      recipient,  # 
+      html_message=html_welcome, # El mensaje con html
+      fail_silently=False 
+   )
 
 class UserRegisterView(GenericAPIView):
-    serializer_class = UserRegisterSerializer
-    def post(self, request):
-        try:
-            serializer = UserRegisterSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True) # Para ValidationError 
-            
-            # Verificar si el usuario existe
-            email = serializer.validated_data['email']
-            if UserClientModel.objects.filter(email=email).exists():
-                return Response({
-                    "message": "El email ya se encuentra registrado."
-                }, status=status.HTTP_400_BAD_REQUEST)
+   serializer_class = UserRegisterSerializer
 
-            # Generar el codigo
-            verification_code = str(random.randint(1000, 9999))
+   @swagger_auto_schema(
+      request_body=UserRegisterSerializer,
+      responses={
+         201: UserRegisterResponse,
+         400: BAD_REQUEST,
+         500: ERROR_SERVER,
+      }
+    )
+   @transaction.atomic
+   def post(self, request):
+      try:
+         serializer = self.serializer_class(data=request.data)
+         serializer.is_valid(raise_exception=True)
 
-            # Enviar el código de verificación al gmail del usuario
-            subject = f'Hola {serializer.validated_data["name"]}, Confirma tu cuenta CatShop'
-            message = f'Tu código de verificación es: {verification_code}'
-            recipient = [serializer.validated_data['email']]
-            
-            send_mail(
-                subject,
-                message,
-                'noreply@localhost.com',  # El remitente 
-                recipient,  # A quienes se los envía
-                fail_silently=False  # Mostrar una excepción cuando ocurra un error al enviar el correo 
-            )
-            
-            # Crear el usuario usando el método create del serializador
-            serializer.save(
-               verification_code=verification_code,
-               is_verified=False
-            )
-
+         # Verificar si el usuario ya existe
+         email = serializer.validated_data['email']
+         if UserClientModel.objects.filter(email=email).exists():
             return Response({
-                "message": "Usuario registrado. Verifica tu email con el código enviado."
-            }, status=status.HTTP_201_CREATED)
-        
-        except serializers.ValidationError as e:
-            return Response({
-                "message": "Datos inválidos",
-                "errors": e.detail 
+               "message": "El email ya se encuentra registrado.",
+               "error": "error"
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        except Exception as e:
-            return Response({
-                "message": "Ocurrió un error",
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+         # Generar el código de verificación
+         verification_code = str(random.randint(1000, 9999))
+
+         # Crear el usuario usando el método create del serializador
+         user = serializer.save(
+            verification_code=verification_code,
+            is_verified=False
+         )
+
+      except serializers.ValidationError as e:
+         return Response({
+            "message": "Datos inválidos",
+            "error": e.detail
+         }, status=status.HTTP_400_BAD_REQUEST)
+
+      except Exception as e:
+         return Response({
+            "message": "Ocurrió un error",
+      }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+      try:
+        # Enviar el código de verificación al email del usuario después de la transacción
+         email_code_verification(user, verification_code)
+
+         return Response({
+               "message": "Usuario registrado. Verifica tu email con el código enviado."
+         }, status=status.HTTP_201_CREATED)
+      
+      except Exception as e:
+         return Response({
+            "message": "Usuario creado, pero ocurrió un error al enviar el correo de verificación.",
+         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class VerifyEmailView(GenericAPIView): 
    serializer_class = UserEmailSerializer
+   
+   @swagger_auto_schema(
+      request_body=UserEmailSerializer,
+      responses={
+         200: ResponseTokenUser,
+         400: BAD_REQUEST,
+         500: ERROR_SERVER,
+      }
+    )
+   
+   @transaction.atomic
    def post(self, request):
-      serializer = UserEmailSerializer(data=request.data)
+      serializer = self.serializer_class(data=request.data)
       serializer.is_valid(raise_exception=True)
       validated_data = serializer.validated_data
       
@@ -95,24 +166,25 @@ class VerifyEmailView(GenericAPIView):
       
       # TODO: Recuperar el historial del usuario
       try:
-         isOrderUser = OrderUserTempModel.objects.filter(email=validated_data['email'])
+         isOrderUser = OrderUserTempModel.objects.filter(email=user.email)
 
          if isOrderUser.exists(): 
-            orders = OrderModel.objects.filter(id__in=[orderUser.order_id for orderUser in isOrderUser]).order_by('-created_at')
+            orders = OrderModel.objects.filter(id__in=[orderUser.order_id for orderUser in isOrderUser]).order_by('created_at')
 
             if orders:
                # Actualizar los datos del usuario con la identificación del pedido más reciente
                latest_order = orders[0]
-               identification = latest_order.order_identification
-               user.last_name = identification.last_name
-               user.document_number = identification.document_number
-               user.phone = identification.phone
-               user.ruc = identification.ruc
-               user.save()
+
+               if  hasattr(latest_order, 'order_identification'):         
+                  identification = latest_order.order_identification
+                  user.last_name = identification.last_name
+                  user.document_number = identification.document_number
+                  user.phone = identification.phone
+                  user.ruc = identification.ruc
+                  user.save()
 
                # Crear la dirección del usuario
-               if hasattr(latest_order, 'order_delivery') and latest_order.order_delivery:
-                  # print
+               if hasattr(latest_order, 'order_delivery'):
                   address = latest_order.order_delivery
                   UserAddressModel.objects.create(
                      department=address.department,
@@ -125,8 +197,13 @@ class VerifyEmailView(GenericAPIView):
                      user_client=user
                   )
 
-               # Guardar los métodos de pago y pedidos
+               # Guardar el historial de pedidos y los métodos de pago
                for order in orders:
+                  UserOrderModel.objects.create(
+                     order=order,
+                     user_client=user
+                  )
+
                   if hasattr(order, 'order_payment') and order.order_payment:
                      payment = order.order_payment
                      UserPaymentMethodModel.objects.create(
@@ -139,11 +216,9 @@ class VerifyEmailView(GenericAPIView):
                         installments  = payment.installments,
                         user_client=user,
                      )
-                      
-                  UserOrderModel.objects.create(
-                     order=order,
-                     user_client=user
-                  )
+
+         #TODO Se envia un email de bienvenida al cliente
+         email_welcome(user)
                
          return Response({
             "message": "Verificación completada",
@@ -154,21 +229,30 @@ class VerifyEmailView(GenericAPIView):
       except serializers.ValidationError as e:
          return Response({
             "message": "Datos inválidos",
-            "errors": e.detail 
+            "error": e.detail 
          }, status=status.HTTP_400_BAD_REQUEST)
 
       except Exception as e:
          return Response({
             "message": "Ocurrió un error inesperado",
-            "error": str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class UserloginView(GenericAPIView):
    serializer_class = UserLoginSerializer
+
+   @swagger_auto_schema(
+      request_body=UserLoginSerializer,
+      responses={
+         200: ResponseTokenUser,
+         400: BAD_REQUEST,
+         404: NOT_FOUND,
+         500: ERROR_SERVER,
+      }
+   )
+   
    def post(self, request):
       try:
-         serializer  = UserLoginSerializer(data=request.data)
+         serializer  = self.serializer_class(data=request.data)
          serializer .is_valid(raise_exception=True)
          validated_data = serializer.validated_data
 
@@ -180,9 +264,10 @@ class UserloginView(GenericAPIView):
                 "message": "Cuenta no verificada",
             }, status=status.HTTP_400_BAD_REQUEST)
          
+         # Verificar la contraseña del usuario
          if not check_password(validated_data["password"], user.password):
             return Response({
-                "message": "Contraseña incorrecta",
+               "message": "Contraseña incorrecta",
             }, status=status.HTTP_400_BAD_REQUEST)
 
          return Response({
@@ -194,7 +279,7 @@ class UserloginView(GenericAPIView):
       except serializers.ValidationError as e:
          return Response({
             "message": "Datos inválidos",
-            "errors": e.detail 
+            "error": e.detail 
          }, status=status.HTTP_400_BAD_REQUEST)      
       
       except UserClientModel.DoesNotExist:
@@ -205,15 +290,24 @@ class UserloginView(GenericAPIView):
       except Exception as e:
          return Response({
             "message": "Ocurrió un error inesperado",
-            "error": str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ResendCodeView(GenericAPIView):
    serializer_class = ResendCodeSerializer
+
+   @swagger_auto_schema(
+      request_body=ResendCodeSerializer,
+      responses={
+         200: ResponseTokenUser,
+         400: BAD_REQUEST,
+         404: NOT_FOUND,
+         500: ERROR_SERVER,
+      }
+   )
    def post(self, request):
       try:
-         serializer = ResendCodeSerializer(data=request.data)
+         serializer = self.serializer_class(data=request.data)
          serializer.is_valid(raise_exception=True)
          validated_data = serializer.validated_data
 
@@ -231,19 +325,12 @@ class ResendCodeView(GenericAPIView):
          user.save()
 
          # Volver a enviar codigo de verificación
-      
-         send_mail(
-            f'Hola {user.name} Confitme tu cuenta CatShop',
-            f'Tu codigo de verificaion es: {verification_code}',
-            'noreply@localhost.com', 
-            [user.email], 
-            fail_silently=False  
-         )
+         email_code_verification(user, verification_code)
 
          print(validated_data)
          return Response({
             "message": "Código de verificación enviado correctamente"
-         })   
+         }, status=status.HTTP_200_OK)   
          
       except serializers.ValidationError as e:
          return Response({
@@ -254,7 +341,6 @@ class ResendCodeView(GenericAPIView):
       except Exception as e:
          return Response({
             "message": "Ocurrió un error inesperado",
-            "error": str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
          
 
