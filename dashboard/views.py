@@ -1,9 +1,10 @@
 from django.shortcuts import render
 from rest_framework.generics import (
-   ListCreateAPIView,
    UpdateAPIView,
    CreateAPIView,
-   ListAPIView
+   ListAPIView,
+   DestroyAPIView,
+   GenericAPIView,
 )
 
 from .models import (
@@ -66,6 +67,21 @@ class StoreUpdateView(UpdateAPIView):
             'message': 'Tienda no encontrada',
          }, status=status.HTTP_404_NOT_FOUND)
       
+class StoreDeleteView(DestroyAPIView):
+   queryset = StoreModel.objects.all()
+   serializer_class = StoreSerializer
+
+   def destroy(self, request, *args, **kwargs):
+      try:
+         response = super().destroy(request, *args, **kwargs)
+         return Response({
+            'message': 'Tienda eliminada',
+         }, status=status.HTTP_204_NO_CONTENT)
+      except StoreModel.DoesNotExist as e:
+         return Response({
+            'message': 'Tienda no encontrada',
+         }, status=status.HTTP_404_NOT_FOUND)
+         
 
 class OffersGetAllView(ListAPIView):
    queryset = OffersModel.objects.all()
@@ -110,6 +126,34 @@ class OffersUpdateView(UpdateAPIView):
             'data': response.data,
          }, status=status.HTTP_200_OK)
 
+      except OffersModel.DoesNotExist as e:
+         return Response({
+            'message': 'Oferta no encontrada',
+         }, status=status.HTTP_404_NOT_FOUND)
+      
+class OffersDesactivate(DestroyAPIView):
+   queryset = OffersModel.objects.all()
+   serializer_class = OffersSerializer
+
+   def delete(self, request, *args, **kwargs):
+      try:
+         offer = self.queryset.get(pk=kwargs.get('pk'))
+
+         if offer.is_active:
+            offer.is_active = False
+            offer.save()
+            return Response({
+               'message': 'La oferta no se ha desactivado',
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+         if not offer.is_active:
+            offer.is_active = True
+            offer.save()
+
+            return Response({
+               'message': 'La oferta se ha desactivado',
+            }, status=status.HTTP_200_OK)
+      
       except OffersModel.DoesNotExist as e:
          return Response({
             'message': 'Oferta no encontrada',
