@@ -4,20 +4,20 @@ from purchases.models import OrderModel
 from product.models import ProductModel
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-class UserManager(BaseUserManager):
-   def create_user(self, email, password, **extra_fields):
-      if not email:
-         raise ValueError('Email required')
-     
-      email = self.normalize_email(email)
-      user = self.model(
-         email = email,
-         **extra_fields
-      )
+from catshop.manage import UserManager
 
-      user.set_password(password)
-      user.save(using=self._db)
-      return user
+class RoleModel(models.Model):
+   id = models.AutoField(primary_key=True)
+
+   ROLE_NAME_CHOICES = [
+      ('ADMIN', 'Administrador'),
+      ('CLIENT', 'Cliente')
+   ]
+
+   name = models.CharField(max_length=100,choices=ROLE_NAME_CHOICES, default='CLIENT')
+
+   class Meta:
+      db_table = 'roles'
 
 class UserClientModel(AbstractBaseUser):
    id = models.AutoField(primary_key=True)
@@ -32,6 +32,10 @@ class UserClientModel(AbstractBaseUser):
    verification_code = models.CharField(max_length=6, blank=True, null=True)  # Nuevo campo para el código de verificación
    is_verified = models.BooleanField(default=False)  # Para saber si el usuario ha verificado su cuenta
    status = models.BooleanField(default=True)
+
+   is_superuser = models.BooleanField(default=False, null=True)
+   role_id = models.ForeignKey(RoleModel, on_delete=models.CASCADE, related_name='users', null=True)
+
    created_at = models.DateTimeField(auto_now_add=True)
    updated_at = models.DateTimeField(auto_now=True)
 
@@ -88,4 +92,3 @@ class UserFavoritesModel(models.Model):
       
    class Meta:
         db_table = 'user_favorite'
-

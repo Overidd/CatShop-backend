@@ -68,7 +68,6 @@ class DestroyFavoriteView(DestroyAPIView):
    queryset = UserFavoritesModel.objects.all()
    serializer_class = UserFavoritesSerializer
    permission_classes = [IsAuthenticated]  # Para la autenticación
-
    def destroy(self, request, *args, **kwargs):
       try:
          id = kwargs.get('pk')

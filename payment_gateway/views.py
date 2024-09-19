@@ -362,10 +362,12 @@ class ProcessPaymentView(GenericAPIView):
 
          order_delivery = IsOrderDelivery('Tienda', '')
          if hasattr(order, 'order_store'):
-            order_delivery = IsOrderDelivery(order.order_store, '')
+            order_store = order.order_store.store_name
+            order_delivery = IsOrderDelivery(order_store, '')
 
          if hasattr(order, 'order_delivery'):
-            order_delivery = IsOrderDelivery(order.order_delivery, '')
+            order_store = order.order_delivery.address
+            order_delivery = IsOrderDelivery(order_store, '')
 
          amount = int((order.total * 100) + order.price_delivery)  # Convertir a céntimos, por ejemplo, 100.00 soles -> 10000 céntimos
 

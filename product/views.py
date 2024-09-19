@@ -9,6 +9,8 @@ from rest_framework.pagination import PageNumberPagination
 import cloudinary
 import cloudinary.uploader
 
+from catshop.permission import IsAdmin
+
 from rest_framework.generics import (
    ListCreateAPIView,
    CreateAPIView,
@@ -50,10 +52,6 @@ from catshop.response import (
 
 hashids = Hashids(salt=settings.SALT_HASHIDS, min_length=6)
 
-# Create your views here.
-class ProductView(ListCreateAPIView):
-   queryset = ProductModel.objects.all()
-   serializer_class = ProductSerializer
 class CustomPageNumberPagination(PageNumberPagination):
    page_size = 20
    page_size_query_param = 'page_size'
@@ -449,8 +447,9 @@ class ProductCategoryGelAllView(ListAPIView):
 class ProductCategoryCreate(CreateAPIView):
    queryset = ProductCategoryModel.objects.all()
    serializer_class = ProductCategorySerializer
+
    def create(self, request, *args, **kwargs):
-      response = super().list(request, *args, **kwargs)
+      response = super().create(request, *args, **kwargs)
       
       return Response({
          'message': 'Categoria creado exitosamente',
@@ -498,7 +497,7 @@ class ProductBrandCreateView(CreateAPIView):
    serializer_class = ProductBrandSerializer
 
    def create(self, request, *args, **kwargs):
-      response = super().list(request, *args, **kwargs)
+      response = super().create(request, *args, **kwargs)
       
       return Response({
          'message': 'Marca creado exitosamente',

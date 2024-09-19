@@ -156,8 +156,6 @@ config(
     api_key = os.getenv('API_KEY_CLOUDINARY'),
     api_secret = os.getenv('API_SECRET_CLOUDINARY'),
     secure = True,
-    # redirect_secure = True,
-    # cname = 'your_custom_domain.com'
 )
 
 #*Configuracion JWT
@@ -182,7 +180,7 @@ SIMPLE_JWT = {
     # 'BLACKLIST_AFTER_ROTATION': True,
 }
 
-# Configuración para usar Gmail
+#? Configuración para usar Gmail
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587

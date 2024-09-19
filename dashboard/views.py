@@ -135,9 +135,9 @@ class OffersDesactivate(DestroyAPIView):
    queryset = OffersModel.objects.all()
    serializer_class = OffersSerializer
 
-   def delete(self, request, *args, **kwargs):
+   def destroy(self, request, *args, **kwargs):
       try:
-         offer = self.queryset.get(pk=kwargs.get('pk'))
+         offer = self.queryset.destroy(pk=kwargs.get('pk'))
 
          if offer.is_active:
             offer.is_active = False

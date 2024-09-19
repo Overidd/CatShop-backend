@@ -1,5 +1,4 @@
 from django.contrib.auth.hashers import check_password
-from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import serializers, status
@@ -10,11 +9,18 @@ from profile_client.models import UserClientModel
 
 from purchases.models import OrderModel, OrderUserTempModel
 
+from rest_framework.generics import (
+   GenericAPIView,
+   ListAPIView,
+   CreateAPIView,
+)
+
 from profile_client.models import (
    UserClientModel, 
    UserAddressModel, 
    UserPaymentMethodModel, 
-   UserOrderModel
+   UserOrderModel,
+   RoleModel,
 )
 
 from .serializers import (
@@ -22,7 +28,8 @@ from .serializers import (
    UserEmailSerializer, 
    UserRegisterSerializer, 
    UserLoginSerializer, 
-   ResendCodeSerializer
+   ResendCodeSerializer,
+   RoleSerializer
 )
 
 from catshop.response import (
@@ -170,7 +177,7 @@ class VerifyEmailView(GenericAPIView):
          isOrderUser = OrderUserTempModel.objects.filter(email=user.email)
 
          if isOrderUser.exists(): 
-            orders = OrderModel.objects.filter(id__in=[orderUser.order_id for orderUser in isOrderUser]).order_by('created_at')
+            orders = OrderModel.objects.filter(id__in=[orderUser.order_id for orderUser in isOrderUser]).order_by('-created_at')
 
             if orders:
                # Actualizar los datos del usuario con la identificación del pedido más reciente
@@ -220,7 +227,7 @@ class VerifyEmailView(GenericAPIView):
 
          #TODO Se envia un email de bienvenida al cliente
          email_welcome(user)
-               
+            
          return Response({
             "message": "Verificación completada",
             "access_token": token['access'],
@@ -348,3 +355,26 @@ class ResendCodeView(GenericAPIView):
 
 class UserRegisterGoogleView(APIView):
    pass
+
+class RoleListView(ListAPIView):
+    queryset = RoleModel.objects.all()
+    serializer_class = RoleSerializer
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+
+        return Response({
+            'message': 'Roles fetched successfully',
+            'data': response.data
+        }, status=status.HTTP_200_OK)
+    
+class RoleCreateView(CreateAPIView):
+    serializer_class = RoleSerializer
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+
+        return Response({
+            'message': 'Role created successfully',
+            'data': response.data
+        }, status=status.HTTP_201_CREATED)

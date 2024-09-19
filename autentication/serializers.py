@@ -1,7 +1,7 @@
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
-from profile_client.models import UserClientModel
+from profile_client.models import UserClientModel, RoleModel
 
 from django.contrib.auth.hashers import make_password 
 # Función para crear el token con el correo electrónico añadido al payload
@@ -52,3 +52,8 @@ class UserLoginSerializer(serializers.Serializer):
 
 class ResendCodeSerializer(serializers.Serializer):
    email = serializers.EmailField()
+
+class RoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoleModel
+        fields = '__all__'
