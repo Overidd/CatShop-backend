@@ -1,15 +1,19 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, serializers
 
 import requests
 from django.conf import settings
+from django.db import transaction
 
 from hashids import Hashids
-hashids = Hashids(salt="sdf78Pxq34lZsada", min_length=6)
-import uuid
+from drf_yasg.utils import swagger_auto_schema
+
+from billing.utils import invoicePayments
+from django.core.mail import send_mail
+from autentication.utils import decode_jwt_token
 
 # Create your views here.
 from purchases.models import (
@@ -48,23 +52,37 @@ from .utils import (
    OrderDetailType,
 )
 
-from billing.utils import invoicePayments
-from django.core.mail import send_mail
 from autentication.utils import decode_jwt_token
-from django.db import transaction
+
+from catshop.response import (
+   BAD_REQUEST,
+   NOT_FOUND,
+   ERROR_SERVER,
+   UNAUTHORIZED,
+   PaymentGatewayResponse,
+   ProcessPaymentResponse,
+   ProcessPaymentError,
+)
+
+hashids = Hashids(salt=settings.SALT_HASHIDS, min_length=6)
 
 class RegisterOrderView(CreateAPIView):
    serializer_class = RegisterOrderSerializer
-   
+   @swagger_auto_schema(
+      request_body=RegisterOrderSerializer,
+      responses={
+         201: PaymentGatewayResponse,
+         400: BAD_REQUEST,
+         404: NOT_FOUND,
+         500: ERROR_SERVER
+      }      
+   )   
+
    @transaction.atomic
    def post(self, request, *args, **kwargs):
-      serializer = RegisterOrderSerializer(data=request.data)
       try:
-         if not serializer.is_valid():
-            return Response({
-            "message": "Datos inválidos",
-            "errors": serializer.errors  
-            },status=status.HTTP_400_BAD_REQUEST)
+         serializer = self.serializer_class(data=request.data)
+         serializer.is_valid(raise_exception=True) # Para ValidationError          
 
          validated_data = serializer.validated_data
 
@@ -87,20 +105,19 @@ class RegisterOrderView(CreateAPIView):
             OrderDetailType(**item) for item in order_details_validate
          ]
 
-         error_products_unserialized = []
-         is_error = False
-         total = 0
-         total_discount = 0
-         price_delivery = 0
-
-         # Obtenemos los productos con el order_details id
+         # Obtenemos los productos con el order_details buscando por el id
          products = ProductModel.objects.filter(id__in=[order_delail.product_id for order_delail in order_details])
          
          if not products.exists():
             return Response({
                'message': 'No hay productos disponibles',
-               'data': []
             }, status=status.HTTP_404_NOT_FOUND)
+
+         error_products_unserialized = []
+         is_error = False
+         total = 0
+         total_discount = 0
+         price_delivery = 0
 
          for product in products:
             order_detail  = next((item for item in order_details  if item.product_id == product.id), None)
@@ -112,14 +129,16 @@ class RegisterOrderView(CreateAPIView):
                   error_products_unserialized.append(product)
 
                elif is_error == False:
+                  # El descuento de product.discount esta en porcentaje 
                   discount = round(product.price * (product.discount / 100), 2)
+
                   total_discount += discount * order_detail.quantity
                   total += (product.price - discount) * order_detail.quantity
 
-                  # Calculamos el total - discount y reducimos el stock
-                  product.stock -= order_detail.quantity
+                  # Reducimos el stock del producto
+                  product.stock -= order_detail.quantity                  
+                  # Deshabilitamos el producto
                   if product.stock <= 0:
-                     # Deshabilitamos el producto
                      product.status = False
 
                   product.save()
@@ -129,18 +148,19 @@ class RegisterOrderView(CreateAPIView):
                return Response({
                   'message': f'No es posible continuar con el pago hay algunos productos que representa inconsistencias',
                   'data': {
-                     'error_products': error_products
+                     'error': error_products
                   }
                }, status=status.HTTP_400_BAD_REQUEST)
 
+         # Creamos nuevo orden
          new_order = OrderModel.objects.create(
             total=round(total,2), 
             total_discount=round(total_discount,2),
          )
 
          is_order_store, is_order_delivery = self.registerOpcionOrder(opciones_entrega, order_store, order_delivery, new_order)
+         #TODO: Se asignar manualmente el precio por delivery en 20
          if is_order_delivery:
-            #TODO: Se asignar manualmente el precio por delivery en 20
             price_delivery = 20
 
          new_code = 'order-'+ hashids.encode(new_order.id)
@@ -189,9 +209,9 @@ class RegisterOrderView(CreateAPIView):
             token_user = decode_jwt_token(isuser.token)
             user_id = token_user.get('user_id')
             email = token_user.get('email')
-
-            #? Verificar si el usuario es valido
             user = UserClientModel.objects.filter(id=user_id ,email=email).first()
+
+            # Verificar si el usuario es valido
             if not user:
                OrderUserTempModel.objects.create(email=isuser.email ,order=new_order)
                return Response({
@@ -212,7 +232,7 @@ class RegisterOrderView(CreateAPIView):
             )
 
             # TODO: Se actualiza la nueva informacion en el perfil del usario      
-            if hasattr(user, 'user_address') and user.user_address:
+            if hasattr(user, 'user_address'):
                user_address = user.user_address
                user_address.department = order_delivery.department
                user_address.province = order_delivery.province
@@ -234,7 +254,6 @@ class RegisterOrderView(CreateAPIView):
                   street_number=order_delivery.street_number,
                   reference=order_delivery.reference,
                )
-
          
          if not isuser.isuser:
             # En caso de que el usuario no este registrado
@@ -254,11 +273,16 @@ class RegisterOrderView(CreateAPIView):
                'order_detail': order_details_data,
             }
          }, status=status.HTTP_201_CREATED)
+
+      except serializers.ValidationError as e:
+         return Response({
+            "message": "Datos inválidos",
+            "error": e.detail  
+         },status=status.HTTP_400_BAD_REQUEST)
       
       except Exception as e:
          return Response({
             "message": "Ocurrió un error inesperado",
-            "error": str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
          
 
@@ -283,84 +307,94 @@ class RegisterOrderView(CreateAPIView):
             order = new_order,
          )
       return new_order_store, new_order_delivery
-   
-   def generate_unique_code(self):
-      # Genera un UUID4 para asegurar unicidad
-      unique_id = uuid.uuid4().int
-      # Codifica el UUID4 como un código corto
-      return hashids.encode(unique_id)
+
 
 class IsOrderDelivery:
    def __init__(self, address, department):
       self.address = address if address !='none' or address else "Tienda"
       self.department = department
 
+class ProcessPaymentView(GenericAPIView):   
+   serializer_class = ProcessPaymentSerializer
 
-class ProcessPaymentView(APIView):   
+   @swagger_auto_schema(
+      request_body=ProcessPaymentSerializer,
+      responses={
+         201: ProcessPaymentResponse,
+         400: ProcessPaymentError,
+         401: UNAUTHORIZED,
+         404: NOT_FOUND,
+         500: ERROR_SERVER
+      }
+   )
    def post(self, request):
-      serializer = ProcessPaymentSerializer(data=request.data)
-
-      if not serializer.is_valid():
-         return Response({
-            "message": "Datos inválidos",
-            "errors": serializer.errors
-         }, status=status.HTTP_400_BAD_REQUEST)
-
-      validated_data = serializer.validated_data
-      # Obtener los datos de la orden
-      order = OrderModel.objects.filter(code=validated_data['code_order']).first()
-
-      if not order:
-         return Response({
-            "message": "Orden no encontrada",
-         }, status=status.HTTP_404_NOT_FOUND)
-
-      # Acceder a las relaciones OneToOne
-      order_identification = order.order_identification
-
-      order_delivery = IsOrderDelivery('Tienda', 'Tienda')
-      if hasattr(order, 'order_store') and order.order_store:
-         order_delivery = IsOrderDelivery(order.order_store, '')
-
-      if hasattr(order, 'order_delivery') and order.order_delivery:
-         order_delivery = IsOrderDelivery(order.order_delivery, '')
-
-      if not order_identification or not order_delivery:
-         return Response({
-            "message": "Datos de identificación o datos de delivery no encontrados",
-         }, status=status.HTTP_400_BAD_REQUEST)
-
-      amount = int((order.total * 100) + order.price_delivery)  # Convertir a céntimos, por ejemplo, 100.00 soles -> 10000 céntimos
-      # print(order_delivery.address, 'order_delivery')
-      # Crear el payload para la solicitud a Culqi
-      data = {
-         "amount": amount,  # El monto en céntimos 
-         "currency_code": "PEN",  # Moneda (PEN o USD)
-         "email": order_identification.email, # Email del cliente
-         "source_id": validated_data['token_id'],  # El token que se generó en el frontend
-         "description": "Pago por producto",  # Descripción del cargo
-         "capture": True, # Indica que la captura sea automatico, (12.00 am) procesa culqi
-         "antifraud_details": {
-            "address": order_delivery.address,
-            # "address_city": order_delivery.department,
-            "country_code": "PE",
-            "first_name": order_identification.name,
-            "last_name": order_identification.last_name,
-            "phone_number": order_identification.phone,
-         },
-         "metadata": {
-            "order_id": order.code,
-         }
-      }
-
-      # Encabezados de la solicitud
-      headers = {
-         "Content-Type": "application/json",
-         "Authorization": f"Bearer {settings.API_KEY_CULQI}"
-      }
-
-      # Solicitud a la API de Culqi
       try:
+         serializer = self.serializer_class(data=request.data)
+         if not serializer.is_valid():
+            return Response({
+               "message": "Datos inválidos",
+               "error": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+         validated_data = serializer.validated_data
+         
+         user = None
+         # Verificar si existe el usuario
+         if validated_data.get('user_token'):
+            isuser = decode_jwt_token(validated_data['user_token'])
+            user = UserClientModel.objects.filter(id=isuser.get('user_id'), email=isuser.get('email')).first()
+
+         # Obtener los datos de la orden
+         order = OrderModel.objects.filter(code=validated_data['code_order']).first()
+
+         if not order:
+            return Response({
+               "message": "Orden no encontrada",
+            }, status=status.HTTP_404_NOT_FOUND)
+
+         if not hasattr(order, 'order_identification'):
+            return Response({
+               "message": "Datos de identificación no encontrados, genera un nuevo orden",
+            }, status=status.HTTP_404_NOT_FOUND)
+         
+         # Acceder a las relaciones OneToOne
+         order_identification = order.order_identification
+
+         order_delivery = IsOrderDelivery('Tienda', '')
+         if hasattr(order, 'order_store'):
+            order_delivery = IsOrderDelivery(order.order_store, '')
+
+         if hasattr(order, 'order_delivery'):
+            order_delivery = IsOrderDelivery(order.order_delivery, '')
+
+         amount = int((order.total * 100) + order.price_delivery)  # Convertir a céntimos, por ejemplo, 100.00 soles -> 10000 céntimos
+
+         # Crear el payload para la solicitud a Culqi
+         data = {
+            "amount": amount,  # El monto en céntimos 
+            "currency_code": "PEN",  # Moneda (PEN o USD)
+            "email": order_identification.email, # Email del cliente
+            "source_id": validated_data['token_id'],  # El token que se generó en el frontend
+            "description": "Pago por producto",  # Descripción del cargo
+            "capture": True, # Indica que la captura sea automatico, (12.00 am) procesa culqi
+            "antifraud_details": {
+               "address": order_delivery.address,
+               # "address_city": order_delivery.department,
+               "country_code": "PE",
+               "first_name": order_identification.name,
+               "last_name": order_identification.last_name,
+               "phone_number": order_identification.phone,
+            },
+            "metadata": {
+               "order_id": order.code,
+            }
+         }
+
+         headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {settings.API_KEY_CULQI}"
+         }
+
          response = requests.post(
             settings.URL_API_CULQI,  # Api
             json=data,
@@ -400,22 +434,21 @@ class ProcessPaymentView(APIView):
                   installments=metadata.get('installments', 1),
                   order=order
                )
+
+            if user:
+               UserPaymentMethodModel.objects.create(
+                  payment_method=order_payment.payment_method,
+                  payment_number=order_payment.payment_number,
+                  card_type=order_payment.card_type,
+                  card_name=order_payment.card_name,
+                  country_code=order_payment.country_code,
+                  installments=order_payment.installments,
+                  user_client=user,
+               )
+
             order.status = True
             order.save()
 
-            if validated_data.get('is_user_id'):
-               user_payment = UserPaymentMethodModel.objects.filter(user_client=validated_data.get('is_user_id')).first()
-
-               if user_payment:
-                  user_payment.payment_method = order_payment.payment_method
-                  user_payment.payment_number = order_payment.payment_number
-                  user_payment.card_type = order_payment.card_type
-                  user_payment.card_name = order_payment.card_name
-                  user_payment.country_code = order_payment.country_code
-                  user_payment.installments = order_payment.installments
-                  user_payment.save()
-
-               
             # TODO: Enviar email de seguimiento al cliente y administrador
             # TODO: Generar facturacion de los productos comprados 
             link_pdf_invoice = invoicePayments(order, order_identification, order_delivery, order_payment)
@@ -434,15 +467,13 @@ class ProcessPaymentView(APIView):
 
             return Response({
                "message": "Pago realizado exitosamente",
-               'data': {
-                  "link_pdf_invoice": link_pdf_invoice
-               }
+               'link_pdf_invoice': link_pdf_invoice
             }, status=status.HTTP_201_CREATED)
          
          else:
             return Response({
                "message": "Ocurrió un error al procesar el pago",
-               "errors": {
+               "error": {
                   "type_error": response_data['type'],
                   "merchant_message": response_data['merchant_message'],
                   "user_message": response_data['user_message'],
@@ -451,7 +482,6 @@ class ProcessPaymentView(APIView):
       except requests.RequestException as e:
          return Response({
             "message": "Ocurrió un error inesperado",
-            "error": str(e),
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

@@ -55,7 +55,7 @@ class OrderPaymentSerializer(serializers.ModelSerializer):
       ]
 
 # Serializador para "order_details"
-class OrderDetailSerializer(serializers.Serializer):
+class DetailSerializer(serializers.Serializer):
    quantity = serializers.IntegerField()
    price_unit = serializers.FloatField()
    product_id = serializers.IntegerField() 
@@ -68,7 +68,7 @@ class RegisterOrderSerializer(serializers.Serializer):
    order_store = OrderStoreSerializer(required=False)  # Opcional
    order_delivery = OrderDeliverySerializer(required=False)  # Opcional
    order_payment = OrderPaymentSerializer(required=False)  # Opcional
-   order_details = OrderDetailSerializer(many=True)
+   order_details = DetailSerializer(many=True)
 
    def validate(self, data):
       if not data.get('order_store') and not data.get('order_delivery'):
@@ -78,7 +78,7 @@ class RegisterOrderSerializer(serializers.Serializer):
 class ProcessPaymentSerializer(serializers.Serializer):
    token_id = serializers.CharField(max_length=100)
    code_order = serializers.CharField(max_length=100)
-   is_user_id = serializers.IntegerField(required=False, allow_null=True, default=None)
+   user_token = serializers.CharField(required=False, allow_null=True, default=None)
 
 class OrderDetailSerializer(serializers.ModelSerializer):
     class Meta:

@@ -21,6 +21,7 @@ from .models import (
    ProductDetailModel,
    ProductCategoryModel,
    ProductImageModel,
+   ProductBrandModel,
 )
 
 from .serializer import (
@@ -31,11 +32,23 @@ from .serializer import (
    ProductDetailSerializer,
    ByIdproductSerializer,
    ProductImageSerializer,
-   VerifyQuantitySerializer
+   VerifyQuantitySerializer,
+   ProductCategorySerializer,
+   ProductBrandSerializer
 )
 
 from hashids import Hashids
-hashids = Hashids(salt="sdf78Pxq34lZsada", min_length=6)
+from django.conf import settings
+from drf_yasg.utils import swagger_auto_schema
+from catshop.response import (
+   IsActiveResponse,
+   VerifyQuantityResponse,
+   BAD_REQUEST,
+   ERROR_SERVER,
+   NOT_FOUND,
+)
+
+hashids = Hashids(salt=settings.SALT_HASHIDS, min_length=6)
 
 # Create your views here.
 class ProductView(ListCreateAPIView):
@@ -86,204 +99,205 @@ class ProductListAllView(ListAPIView):
 
 class CreateProductView(CreateAPIView):
    serializer_class = CreateProductSerializer
-
+   
+   @swagger_auto_schema(
+      request_body=CreateProductSerializer,
+      responses={
+         201: CreateProductSerializer,
+         400: BAD_REQUEST,
+         500: ERROR_SERVER,
+      }
+    )
    @transaction.atomic
    def post(self, request, *args, **kwargs):
-         try:
-            serializer = self.serializer_class(data=request.data)
-            serializer.is_valid(raise_exception=True) # Para ValidationError 
+      try:
+         serializer = self.serializer_class(data=request.data)
+         serializer.is_valid(raise_exception=True) # Para ValidationError 
 
-            validated_data = serializer.validated_data
-            print(validated_data)
-            # Manejar datos Para el model ProductModel
-            name = validated_data.get('name')
-            price = validated_data.get('price')
-            discount = validated_data.get('discount', 0)
-            description = validated_data.get('description')
-            stock = validated_data.get('stock')
-            category_id = validated_data.get('category_id')
-            print(category_id, 'category_id')
-            brand_id = validated_data.get('brand_id')
+         validated_data = serializer.validated_data
+         # Manejar datos Para el model ProductModel
+         name = validated_data.get('name')
+         price = validated_data.get('price')
+         discount = validated_data.get('discount', 0)
+         description = validated_data.get('description')
+         stock = validated_data.get('stock')
+         category_id = validated_data.get('category_id')
+         brand_id = validated_data.get('brand_id')
 
-            # Manejar datos de detalle para el model ProductDetalsModel
-            color = validated_data.get('color')
-            denifit = validated_data.get('denifit')
-            dimension = validated_data.get('dimension')
-            size = validated_data.get('size')
-            characteristics = validated_data.get('characteristics')
-            extra = validated_data.get('extra')
+         # Manejar datos de detalle para el model ProductDetalsModel
+         color = validated_data.get('color')
+         denifit = validated_data.get('denifit')
+         dimension = validated_data.get('dimension')
+         size = validated_data.get('size')
+         characteristics = validated_data.get('characteristics')
+         extra = validated_data.get('extra')
 
-            # Manejar de imágenes
-            images = validated_data.get('images', [])
+         # Manejar de imágenes
+         images = validated_data.get('images', [])
 
-            # Crear el producto
-            new_product = ProductModel.objects.create(
-               name=name,
-               price=price,
-               discount=discount,
-               description=description,
-               stock=stock,
-               category_id=category_id,
-               brand_id=brand_id,
-            )
-            code = hashids.encode(new_product.id)
-            new_product.code = code
-            new_product.save()
+         # Crear el producto
+         new_product = ProductModel.objects.create(
+            name=name,
+            price=price,
+            discount=discount,
+            description=description,
+            stock=stock,
+            category_id=category_id,
+            brand_id=brand_id,
+         )
+         code = hashids.encode(new_product.id)
+         new_product.code = code
+         new_product.save()
 
-            # Crear los detalles del producto
-            ProductDetailModel.objects.create(
-               color=color,
-               denifit=denifit,
-               dimension=dimension,
-               size=size,
-               characteristics=characteristics,
-               extra=extra,
+         # Crear los detalles del producto
+         ProductDetailModel.objects.create(
+            color=color,
+            denifit=denifit,
+            dimension=dimension,
+            size=size,
+            characteristics=characteristics,
+            extra=extra,
+            product=new_product,
+         )
+
+         # Subir imágenes a Cloudinary
+         image_products = []
+         defaul = True
+         for image in images:
+            is_default = defaul
+            defaul = False
+
+            new_product_image = ProductImageModel.objects.create(
+               image=image,
+               default=is_default,
                product=new_product,
             )
+            image_products.append(new_product_image.image.url)
 
-            # Subir imágenes a Cloudinary
-            image_products = []
-            defaul = True
-            for image in images:
-               is_default = defaul
-               defaul = False
-
-               new_product_image = ProductImageModel.objects.create(
-                  image=image,
-                  default=is_default,
-                  product=new_product,
-               )
-               image_products.append(new_product_image.image.url)
-
-            return Response({
-               'message': 'Producto creado exitosamente',
-               'data': serializer.data
-               # 'data': {
-               #    'product': serializer.data,
-               #    'images': image_products
-               # }
-            },status=status.HTTP_201_CREATED)
+         return Response({
+            'message': 'Producto creado exitosamente',
+            'data': serializer.data
+         },status=status.HTTP_201_CREATED)
          
-         except serializers.ValidationError as e:
+      except serializers.ValidationError as e:
             # transaction.rollback() 
-            return Response({
-                "message": "Datos inválidos",
-                "errors": e.detail 
-            }, status=status.HTTP_400_BAD_REQUEST)
+         return Response({
+             "message": "Datos inválidos",
+             "error": e.detail 
+         }, status=status.HTTP_400_BAD_REQUEST)
          
-         except Exception as e:
+      except Exception as e:
             # transaction.rollback() 
-            return Response({
-               'message': 'Ocurrió un error inesperado',
-               'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+         return Response({
+            'message': 'Ocurrió un error inesperado',
+         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
      
 class UpdateProductView(UpdateAPIView):
-    queryset = ProductModel.objects.all()
-    serializer_class = UpdateProductSerializer
-
-    def update(self, request, *args, **kwargs):
-         try:
-            id_product = kwargs.get('pk')
-            if not id_product:
-                return Response({
-                  'message': 'Envia el id del producto',
-               }, status=status.HTTP_404_NOT_FOUND)
-
-            serializer = self.serializer_class(data=request.data)
-            serializer.is_valid(raise_exception=True) 
-
-            validated_data = serializer.validated_data
-
-            product_data = {
-               'name': validated_data.get('name'),
-               'price': validated_data.get('price'),
-               'discount': validated_data.get('discount'),
-               'description': validated_data.get('description'),
-               'stock': validated_data.get('stock'),
-               'category_id': validated_data.get('category_id'),
-               'brand_id': validated_data.get('brand_id'),
-            }
-
-            detail_data = {
-               'color': validated_data.get('color'),
-               'denifit': validated_data.get('denifit'),
-               'dimension': validated_data.get('dimension'),
-               'size': validated_data.get('size'),
-               'characteristics': validated_data.get('characteristics'),
-               'extra': validated_data.get('extra'),
-            }
-
-            images = validated_data.get('images', [])
-            ids_destroy_images = validated_data.get('ids_destroy_images', [])
-            default_image_id = validated_data.get('default_image_id', None)
-
-
-            product = ProductModel.objects.get(id=id_product, status=True)
-            if not product:
-                return Response({
-                   'message': 'Producto no encontrado o no está habilitado',
-                }, status=status.HTTP_404_NOT_FOUND)
-                
-            for clave, value in product_data.items():
-               if value is not None:
-                  setattr(product, clave, value)
-            product.save()
-
-                # Actualizar los detalles del producto si existen
-            if hasattr(product, 'product_detail'):
-              product_detail = product.product_detail
-              for clave, value in detail_data.items():
-                  if value is not None:
-                      setattr(product_detail, clave, value)
-              product_detail.save()
-
-                # Subir nuevas imágenes
-            for image in images:
-              ProductImageModel.objects.create(
-                  image=image,
-                  product=product,
-              )
-
-            # Eliminar imágenes según ids
-            for id_image in ids_destroy_images:
-                 try:
-                     product_image = ProductImageModel.objects.get(id=id_image, product=product)
-                     public_id = product_image.image.public_id
-                     cloudinary.uploader.destroy(public_id)
-                     product_image.delete()
-                 except ProductImageModel.DoesNotExist:
-                     continue
-
-            # Actualizar la imagen predeterminada
-            if default_image_id:
-               ProductImageModel.objects.filter(product=product).update(default=False)
-               default_image = ProductImageModel.objects.filter(id=default_image_id, product=product).first()
-               if default_image:
-                  default_image.default = True
-                  default_image.save()
-
-            return Response({
-                'message': 'Producto actualizado exitosamente',
-                'data': serializer.data
-            })
-
-         except ProductModel.DoesNotExist:
-            return Response({
-               "message": "Producto no encontrado",
-               "error": "error"
+   queryset = ProductModel.objects.all()
+   serializer_class = UpdateProductSerializer
+   
+   def update(self, request, *args, **kwargs):
+      try:
+         id_product = kwargs.get('pk')
+         if not id_product:
+             return Response({
+               'message': 'Envia el id del producto',
             }, status=status.HTTP_404_NOT_FOUND)
-         except serializers.ValidationError as e:
-            transaction.rollback() 
-            return Response({
-               "message": "Datos inválidos",
-               "errors": e.detail 
-            }, status=status.HTTP_400_BAD_REQUEST)
-         except Exception as e:
-            return Response({
-               'message': 'Error inesperado',
-               'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+         serializer = self.serializer_class(data=request.data)
+         serializer.is_valid(raise_exception=True) 
+
+         validated_data = serializer.validated_data
+
+         product_data = {
+            'name': validated_data.get('name'),
+            'price': validated_data.get('price'),
+            'discount': validated_data.get('discount'),
+            'description': validated_data.get('description'),
+            'stock': validated_data.get('stock'),
+            'category_id': validated_data.get('category_id'),
+            'brand_id': validated_data.get('brand_id'),
+         }
+
+         detail_data = {
+            'color': validated_data.get('color'),
+            'denifit': validated_data.get('denifit'),
+            'dimension': validated_data.get('dimension'),
+            'size': validated_data.get('size'),
+            'characteristics': validated_data.get('characteristics'),
+            'extra': validated_data.get('extra'),
+         }
+
+         images = validated_data.get('images', [])
+         ids_destroy_images = validated_data.get('ids_destroy_images', [])
+         default_image_id = validated_data.get('default_image_id', None)
+
+
+         product = ProductModel.objects.filter(id=id_product, status=True).first()
+         if not product:
+             return Response({
+                'message': 'Producto no encontrado o no está deshabilitado',
+             }, status=status.HTTP_404_NOT_FOUND)
+             
+         for clave, value in product_data.items():
+            if value is not None:
+               setattr(product, clave, value)
+         product.save()
+
+         # Actualizar los detalles del producto si existen
+         if hasattr(product, 'product_detail'):
+            product_detail = product.product_detail
+            for clave, value in detail_data.items():
+               if value is not None:
+                  setattr(product_detail, clave, value)
+            product_detail.save()
+
+         # Subir nuevas imágenes
+         for image in images:
+           ProductImageModel.objects.create(
+               image=image,
+               product=product,
+           )
+
+         # Eliminar imágenes según ids
+         for id_image in ids_destroy_images:
+            try:
+               product_image = ProductImageModel.objects.get(id=id_image, product=product)
+               public_id = product_image.image.public_id
+               cloudinary.uploader.destroy(public_id)
+               product_image.delete()
+            except ProductImageModel.DoesNotExist:
+               continue
+
+         # Actualizar la imagen predeterminada
+         if default_image_id:
+            ProductImageModel.objects.filter(product=product).update(default=False)
+            default_image = ProductImageModel.objects.filter(id=default_image_id, product=product).first()
+            if default_image:
+               default_image.default = True
+               default_image.save()
+
+         return Response({
+             'message': 'Producto actualizado exitosamente',
+             'data': serializer.data
+         }, status=status.HTTP_200_OK)
+
+      except ProductModel.DoesNotExist:
+         return Response({
+            "message": "Producto no encontrado",
+            "error": "error"
+         }, status=status.HTTP_404_NOT_FOUND)
+      except serializers.ValidationError as e:
+         transaction.rollback() 
+         return Response({
+            "message": "Datos inválidos",
+            "errors": e.detail 
+         }, status=status.HTTP_400_BAD_REQUEST)
+      except Exception as e:
+         return Response({
+            'message': 'Error inesperado',
+            'error': str(e)
+         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GetByIdProduct(ListAPIView):
    queryset = ProductModel.objects.filter(status=True)
@@ -324,12 +338,11 @@ class GetByIdProduct(ListAPIView):
       except Exception as e:
          return Response({
             'message': 'Error inesperado',
-            'error': str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class IsActiveProduc(ListAPIView):
    queryset = ProductModel.objects.all()
-   serializer_class = ProductSerializer
+   serializer_class = IsActiveResponse
 
    def list(self, request, *args, **kwargs):
       id_product = kwargs.get('pk')
@@ -364,26 +377,126 @@ class IsActiveProduc(ListAPIView):
       except Exception as e:
          return Response({
             'message': 'Error inesperado',
-            'error': str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class VerifyQuantity(ListAPIView):
+class VerifyQuantity(CreateAPIView):
    queryset = ProductModel.objects.all()
-   serializer_class = ProductSerializer
-
-
-class ProductCategoryView(ListCreateAPIView):
-   queryset = ProductCategoryModel.objects.all()
    serializer_class = VerifyQuantitySerializer
 
-   def list(self, request, *args, **kwargs):
+   @swagger_auto_schema(
+      request_body=VerifyQuantitySerializer,
+      responses={
+         200: VerifyQuantityResponse,
+         400: VerifyQuantityResponse,
+         404: NOT_FOUND,
+         500: ERROR_SERVER,
+      }
+    )
+   def post(self, request, *args, **kwargs):
       try:
-         pass
+         serializer = self.serializer_class(data=request.data)
+         serializer.is_valid(raise_exception=True)
+         validated_data = serializer.validated_data
+
+         product_id = validated_data.get('product_id')
+         quantity = validated_data.get('quantity')
+
+         product = ProductModel.objects.filter(id=product_id, status=True).first()
+         if not product:
+            return Response({
+                'message': 'Producto no encontrado o no está habilitado',
+             }, status=status.HTTP_404_NOT_FOUND)
+         
+         if product.stock >= quantity:
+            return Response({
+               'message': 'La cantidad es válida',
+               'data': True,
+             }, status=status.HTTP_200_OK)
+         if product.stock < quantity:
+            return Response({
+               'message': 'La cantidad no es válida, no hay stock suficiente',
+               'data': False,
+             }, status=status.HTTP_400_BAD_REQUEST)
+
+      except serializers.ValidationError as e:
+         return Response({
+            "message": "Datos inválidos",
+            "error": e.detail 
+         }, status=status.HTTP_400_BAD_REQUEST)
+      
       except Exception as e:
          return Response({
             'message': 'Error inesperado',
-            'error': str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-      return
+class ProductCategoryView(ListCreateAPIView):
+   queryset = ProductCategoryModel.objects.all()
+   serializer_class = ProductCategorySerializer
 
+   def list(self, request, *args, **kwargs):
+      response = super().list(request, *args, **kwargs)
+      
+      return Response({
+         'message': 'Listado de categorias',
+         'data': response.data
+      })
+   def create(self, request, *args, **kwargs):
+      response = super().list(request, *args, **kwargs)
+      
+      return Response({
+         'message': 'Categoria creado exitosamente',
+         'data': response.data
+      })
+
+class ProductCategoryUpdateView(UpdateAPIView):
+   queryset = ProductCategoryModel.objects.all()
+   serializer_class = ProductCategorySerializer
+
+   def update(self, request, *args, **kwargs):
+      try:
+          response = super().update(request, *args, **kwargs)
+          return Response({
+              'message': 'Categoria actualizado exitosamente',
+              'data': response.data
+          }, status=status.HTTP_200_OK)
+      
+      except ProductCategoryModel.DoesNotExist:
+          return Response({
+              'message': 'Categoria no encontrado'
+          }, status=status.HTTP_404_NOT_FOUND)
+
+
+class ProductBrandView(ListCreateAPIView):
+   queryset = ProductBrandModel.objects.all()
+   serializer_class = ProductBrandSerializer
+
+   def list(self, request, *args, **kwargs):
+      response = super().list(request, *args, **kwargs)
+      
+      return Response({
+         'message': 'Listado de marcas exitosamente',
+         'data': response.data
+      })
+   def create(self, request, *args, **kwargs):
+      response = super().list(request, *args, **kwargs)
+      
+      return Response({
+         'message': 'Marca creado exitosamente',
+         'data': response.data
+      })
+class ProductBrandUpdateView(UpdateAPIView):
+   queryset = ProductBrandModel.objects.all()
+   serializer_class = ProductBrandSerializer
+   
+   def update(self, request, *args, **kwargs):
+      try:
+          response = super().update(request, *args, **kwargs)
+          return Response({
+              'message': 'Marca actualizado exitosamente',
+              'data': response.data
+          }, status=status.HTTP_200_OK)
+      
+      except ProductCategoryModel.DoesNotExist:
+          return Response({
+              'message': 'Marca no encontrado'
+          }, status=status.HTTP_404_NOT_FOUND)

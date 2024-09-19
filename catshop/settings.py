@@ -166,11 +166,12 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+
+    'EXCEPTION_HANDLER': 'catshop.permission.custom_exception_handler',
 }
+
 # Indicamos que el model UserClientModel sera el model por defect
 AUTH_USER_MODEL = 'profile_client.UserClientModel'
-
-
 
 # Configuracion de JWT Authorization, el tiendo de duracion
 from datetime import timedelta
@@ -198,6 +199,7 @@ API_KEY_NUBEFACT = os.getenv('API_KEY_NUBEFACT')
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+SALT_HASHIDS = os.getenv('SALT_HASHIDS')
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {

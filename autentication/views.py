@@ -27,10 +27,11 @@ from .serializers import (
 
 from catshop.response import (
    UserRegisterResponse,
+   ResponseTokenUser,
    BAD_REQUEST,
    ERROR_SERVER,
    NOT_FOUND,
-   ResponseTokenUser
+   UNAUTHORIZED,
 )
 
 import random
@@ -58,7 +59,7 @@ def email_code_verification(user, verification_code):
 def email_welcome(user):
    subject = f'Hola {user.name}, Bienvenido a CatShop'
    recipient = [user.email]
-   html_welcome = render_to_string('catShop_codigo_verificacion.html', {
+   html_welcome = render_to_string('catShop_correo_verificado.html', {
       'name': user.name
    }) # Rendizar el html
 
@@ -245,6 +246,7 @@ class UserloginView(GenericAPIView):
       responses={
          200: ResponseTokenUser,
          400: BAD_REQUEST,
+         401: UNAUTHORIZED,
          404: NOT_FOUND,
          500: ERROR_SERVER,
       }
@@ -268,7 +270,7 @@ class UserloginView(GenericAPIView):
          if not check_password(validated_data["password"], user.password):
             return Response({
                "message": "Contraseña incorrecta",
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_401_UNAUTHORIZED)
 
          return Response({
             "message": "Login correcto",
@@ -285,7 +287,7 @@ class UserloginView(GenericAPIView):
       except UserClientModel.DoesNotExist:
          return Response({
             "message": "unauthenticated",
-         }, status=status.HTTP_404_NOT_FOUND)
+         }, status=status.HTTP_401_UNAUTHORIZED)
 
       except Exception as e:
          return Response({

@@ -1,5 +1,7 @@
 import jwt
 from django.conf import settings
+from rest_framework.response import Response
+from rest_framework import status
 
 def decode_jwt_token(token):
     try:
@@ -13,7 +15,14 @@ def decode_jwt_token(token):
         return decoded_token
     
     except jwt.ExpiredSignatureError:
-        raise "Token expirado"
+        return Response({
+            "message": "unauthorized"
+        },
+        status=status.HTTP_401_UNAUTHORIZED)
     
     except jwt.InvalidTokenError:
-        raise  "Token inválido"
+        return Response({
+            "message": "unauthorized"
+        },
+        status=status.HTTP_401_UNAUTHORIZED)
+

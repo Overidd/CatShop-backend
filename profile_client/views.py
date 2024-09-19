@@ -7,8 +7,9 @@ from rest_framework.generics import (
    DestroyAPIView,
    ListAPIView,
    UpdateAPIView,
-   RetrieveAPIView
+   GenericAPIView
 )
+from rest_framework.views import APIView
 from .models import (
    UserFavoritesModel,
    UserClientModel,
@@ -21,14 +22,16 @@ from .serializers import (
    UserAddressSerializer
 )
 
-from autentication.utils import decode_jwt_token
+from product.serializer import ProductListSerializer
 
+
+from autentication.utils import decode_jwt_token
 #* Importamos el model product
 from product.models import ProductModel
 
 class GetallFavoriteView(ListAPIView):
    queryset = UserFavoritesModel.objects.all()
-   serializer_class = UserFavoritesSerializer
+   serializer_class = ProductListSerializer
    permission_classes = [IsAuthenticated]  # Para la autenticación
 
    def list(self, request, *args, **kwargs):
@@ -45,21 +48,20 @@ class GetallFavoriteView(ListAPIView):
          if not user_favorites.exists():
             return Response({
                'message': 'No hay productos favoritos',
-               'data': []
-            }, status=404)
+            }, status=status.HTTP_404_NOT_FOUND)
 
          product_ids = user_favorites.values_list('product_id', flat=True)
          product_favorites = ProductModel.objects.filter(id__in=product_ids, stock__gt=0, status=True)
 
+         products = ProductListSerializer(data=product_favorites, many=True).data
          return Response({
-            'message': 'Get all favorites products successfully',
-            'data': [product for product in product_favorites],
+            'message': 'Productos favoritos obtenidos correctamente',
+            'data': products,
          }, status=status.HTTP_200_OK)
 
       except Exception as e:
          return Response({
             'message': 'Ocurrió un error inesperado',
-            'error': str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class DestroyFavoriteView(DestroyAPIView):
@@ -154,7 +156,6 @@ class UpdateUserClient(UpdateAPIView):
    queryset = UserClientModel.objects.all()
    serializer_class = UserClientSerializer
    permission_classes = [IsAuthenticated]  # Para la autenticación
-   
    def update(self, request, *args, **kwargs):
       try:
          response = super().update(request, *args, **kwargs)
@@ -167,13 +168,11 @@ class UpdateUserClient(UpdateAPIView):
       except UserClientModel.DoesNotExist as e:
          return Response({
             'message': 'Usuario no encontrado',
-            'error': str(e)
          }, status=status.HTTP_404_NOT_FOUND)
       
       except Exception as e:
          return Response({
             'message': 'Ocurrió un error inesperado',
-            'error': str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
       
 

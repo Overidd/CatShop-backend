@@ -5,11 +5,11 @@ from .models import (
    ProductModel,
    ProductCategoryModel,
    ProductDetailModel,
-   ProductImageModel
+   ProductImageModel,
+   ProductBrandModel,
 )
 
 class ProductCategorySerializer(ModelSerializer):
-
    class Meta:
       model = ProductCategoryModel
       fields = '__all__'
@@ -18,12 +18,15 @@ class ProductCategorySerializer(ModelSerializer):
       representation = super().to_representation(instance)
       representation['image'] = instance.image.url
       return representation
+class ProductBrandSerializer(ModelSerializer):
+   class Meta:
+      model = ProductBrandModel
+      fields = '__all__'
    
 class ProductSerializer(ModelSerializer): 
    class Meta:
       model = ProductModel
       fields = '__all__'
-
 
    def to_representation(self, instance):
       representation = super().to_representation(instance)
@@ -133,7 +136,6 @@ class ByIdproductSerializer(serializers.Serializer):
    product = ProductSerializer()
    details = ProductDetailSerializer()
    images = ProductImageSerializer(many=True)
-
 
 class VerifyQuantitySerializer(serializers.Serializer):
    id_product = serializers.IntegerField(required=True)
