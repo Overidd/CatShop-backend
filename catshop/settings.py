@@ -158,15 +158,21 @@ config(
     secure = True,
 )
 
-#*Configuracion JWT
+
 REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_FILTER_BACKENDS': [
+       'django_filters.rest_framework.DjangoFilterBackend'
+    ],
 
     'EXCEPTION_HANDLER': 'catshop.permission.custom_exception_handler',
 }
+
 
 # Indicamos que el model UserClientModel sera el model por defect
 AUTH_USER_MODEL = 'profile_client.UserClientModel'
