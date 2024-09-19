@@ -429,17 +429,26 @@ class VerifyQuantity(CreateAPIView):
             'message': 'Error inesperado',
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class ProductCategoryView(ListCreateAPIView):
+class ProductCategoryGelAllView(ListAPIView):
    queryset = ProductCategoryModel.objects.all()
    serializer_class = ProductCategorySerializer
-
    def list(self, request, *args, **kwargs):
-      response = super().list(request, *args, **kwargs)
+      try:
+         response = super().list(request, *args, **kwargs)
       
-      return Response({
-         'message': 'Listado de categorias',
-         'data': response.data
-      })
+         return Response({
+            'message': 'Listado de categorias',
+            'data': response.data
+         })
+      
+      except ProductCategoryModel.DoesNotExist as e:
+         return Response({
+            'message': 'Categoría no encontrada'
+         }, status=status.HTTP_404_NOT_FOUND)
+
+class ProductCategoryCreate(CreateAPIView):
+   queryset = ProductCategoryModel.objects.all()
+   serializer_class = ProductCategorySerializer
    def create(self, request, *args, **kwargs):
       response = super().list(request, *args, **kwargs)
       
@@ -466,17 +475,28 @@ class ProductCategoryUpdateView(UpdateAPIView):
           }, status=status.HTTP_404_NOT_FOUND)
 
 
-class ProductBrandView(ListCreateAPIView):
+class ProductBrandGelAllView(ListAPIView):
    queryset = ProductBrandModel.objects.all()
    serializer_class = ProductBrandSerializer
 
    def list(self, request, *args, **kwargs):
-      response = super().list(request, *args, **kwargs)
+      try:
+         response = super().list(request, *args, **kwargs)
       
-      return Response({
-         'message': 'Listado de marcas exitosamente',
-         'data': response.data
-      })
+         return Response({
+            'message': 'Listado de marcas exitosamente',
+            'data': response.data
+         })
+      except ProductBrandModel.DoesNotExist as e:
+          return Response({
+             'message': 'Marca no encontrada'
+          }, status=status.HTTP_404_NOT_FOUND)
+      
+   
+class ProductBrandCreateView(CreateAPIView):
+   queryset = ProductBrandModel.objects.all()
+   serializer_class = ProductBrandSerializer
+
    def create(self, request, *args, **kwargs):
       response = super().list(request, *args, **kwargs)
       
@@ -484,6 +504,7 @@ class ProductBrandView(ListCreateAPIView):
          'message': 'Marca creado exitosamente',
          'data': response.data
       })
+   
 class ProductBrandUpdateView(UpdateAPIView):
    queryset = ProductBrandModel.objects.all()
    serializer_class = ProductBrandSerializer

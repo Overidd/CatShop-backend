@@ -1,14 +1,18 @@
 from django.urls import path
 from .views import (
-   ProductCategoryView,
    CreateProductView,
    ProductListAllView,
    UpdateProductView,
    GetByIdProduct,
    IsActiveProduc,
    VerifyQuantity,
+   
+   ProductCategoryGelAllView,
+   ProductCategoryCreate,
    ProductCategoryUpdateView,
-   ProductBrandView,
+
+   ProductBrandGelAllView,
+   ProductBrandCreateView,
    ProductBrandUpdateView,
 )
 
@@ -21,9 +25,11 @@ urlpatterns = [
    path('isactive/<int:pk>', IsActiveProduc.as_view()),
    path('verify-quantity/', VerifyQuantity.as_view()),
 
-   path('categories/', ProductCategoryView.as_view()),
-   path('categories/update/<int:pk>', ProductCategoryUpdateView.as_view()),
+   path('category/get_all', ProductCategoryGelAllView.as_view()),
+   path('category/create/', ProductCategoryCreate.as_view()), 
+   path('category/update/<int:pk>', ProductCategoryUpdateView.as_view()),
 
-   path('brands/', ProductBrandView.as_view()),
-   path('brands/update/<int:pk>', ProductBrandUpdateView.as_view()),
+   path('brand/', ProductBrandGelAllView.as_view()),
+   path('brand/create/', ProductBrandCreateView.as_view()),
+   path('brand/update/<int:pk>', ProductBrandUpdateView.as_view()),
 ]

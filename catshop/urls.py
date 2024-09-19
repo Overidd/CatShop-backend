@@ -43,4 +43,7 @@ urlpatterns = [
 
     # Rutas para los productos
     path('api/v1/product/', include('product.urls')),
+
+    # Rutas de view genericos 
+    path('api/v1/dashboard/', include('dashboard.urls')),
 ]
