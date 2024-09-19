@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-a52p@)6v#q639c7_l6fx%9y4^7y6#(8%5y38vmbont^#$56cue
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -197,6 +197,7 @@ API_KEY_NUBEFACT = os.getenv('API_KEY_NUBEFACT')
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 SALT_HASHIDS = os.getenv('SALT_HASHIDS')
 
 SWAGGER_SETTINGS = {

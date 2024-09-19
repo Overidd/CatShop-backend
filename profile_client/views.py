@@ -9,7 +9,6 @@ from rest_framework.generics import (
    UpdateAPIView,
    GenericAPIView
 )
-from rest_framework.views import APIView
 from .models import (
    UserFavoritesModel,
    UserClientModel,
@@ -249,7 +248,6 @@ class GetUserIdentificationView(ListAPIView):
 
    def get(self, request, *args, **kwargs):
       try:
-         print('-------')
          token = request.headers.get('Authorization', None)
          if not token:
             return Response({
@@ -257,12 +255,10 @@ class GetUserIdentificationView(ListAPIView):
             }, status=status.HTTP_401_UNAUTHORIZED)
          
          # Decodificar token
-         print(token,'token')
          token_user = decode_jwt_token(token)
          user_id = token_user.get('user_id')
          email = token_user.get('email')
 
-         print(user_id, email)
          user_client = self.queryset.get(id=user_id, email=email)
          
          return Response({

@@ -4,8 +4,8 @@ from .views import (
    VerifyEmailView,
    UserloginView,
    ResendCodeView,
-   RoleListView,
-   RoleCreateView
+   # RoleCreateView,
+   # RoleListView,
 )
 
 urlpatterns = [
@@ -14,8 +14,8 @@ urlpatterns = [
    path('resend-code/', ResendCodeView.as_view()),
    path('login/', UserloginView.as_view()),
 
-   path('roles/create/', RoleCreateView.as_view()),
-   path('roles/', RoleListView.as_view()),
+   # path('roles/create/', RoleCreateView.as_view()),
+   # path('roles/', RoleListView.as_view()),
 ]
 
 

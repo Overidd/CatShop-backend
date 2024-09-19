@@ -1,10 +1,12 @@
 from django.shortcuts import render
+from rest_framework.permissions import IsAuthenticated
+from catshop.permission import IsAdmin
+
 from rest_framework.generics import (
    UpdateAPIView,
    CreateAPIView,
    ListAPIView,
    DestroyAPIView,
-   GenericAPIView,
 )
 
 from .models import (
@@ -41,6 +43,7 @@ class StoreGetAllView(ListAPIView):
 class StoreCreateView(CreateAPIView):
    queryset = StoreModel.objects.all()
    serializer_class = StoreSerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
 
    def create(self, request, *args, **kwargs):
       response = super().create(request, *args, **kwargs)
@@ -53,6 +56,7 @@ class StoreCreateView(CreateAPIView):
 class StoreUpdateView(UpdateAPIView):
    queryset = StoreModel.objects.all()
    serializer_class = StoreSerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
 
    def update(self, request, *args, **kwargs):
       try:
@@ -70,6 +74,7 @@ class StoreUpdateView(UpdateAPIView):
 class StoreDeleteView(DestroyAPIView):
    queryset = StoreModel.objects.all()
    serializer_class = StoreSerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
 
    def destroy(self, request, *args, **kwargs):
       try:
@@ -104,6 +109,7 @@ class OffersGetAllView(ListAPIView):
 class OffersCreateView(CreateAPIView):
    queryset = OffersModel.objects.all()
    serializer_class = OffersSerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
    
    def create(self, request, *args, **kwargs):
       response = super().create(request, *args, **kwargs)
@@ -116,6 +122,7 @@ class OffersCreateView(CreateAPIView):
 class OffersUpdateView(UpdateAPIView):
    queryset = OffersModel.objects.all()
    serializer_class = OffersSerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
    
    def update(self, request, *args, **kwargs):
       try:
@@ -134,6 +141,7 @@ class OffersUpdateView(UpdateAPIView):
 class OffersDesactivate(DestroyAPIView):
    queryset = OffersModel.objects.all()
    serializer_class = OffersSerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
 
    def destroy(self, request, *args, **kwargs):
       try:

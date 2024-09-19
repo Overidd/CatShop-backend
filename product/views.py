@@ -5,6 +5,7 @@ from django.db import transaction
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 
 import cloudinary
 import cloudinary.uploader
@@ -12,7 +13,6 @@ import cloudinary.uploader
 from catshop.permission import IsAdmin
 
 from rest_framework.generics import (
-   ListCreateAPIView,
    CreateAPIView,
    UpdateAPIView,
    ListAPIView,  
@@ -52,51 +52,9 @@ from catshop.response import (
 
 hashids = Hashids(salt=settings.SALT_HASHIDS, min_length=6)
 
-class CustomPageNumberPagination(PageNumberPagination):
-   page_size = 20
-   page_size_query_param = 'page_size'
-   max_page_size = 100
-
-class ProductFilter(django_filters.FilterSet):
-   min_price = django_filters.NumberFilter(field_name="price", lookup_expr='gte') #  mayor o igual a (gte)
-   max_price = django_filters.NumberFilter(field_name="price", lookup_expr='lte')  #  menor o igual a (lte) 
-   discount = django_filters.NumberFilter(field_name="discount", lookup_expr='lte')
-   category = django_filters.CharFilter(field_name="category__name", lookup_expr='icontains')
-   brand = django_filters.CharFilter(field_name="brand__name", lookup_expr='icontains')
-
-   #Busqueda por el nombre del producto 
-   search = django_filters.CharFilter(field_name="name", lookup_expr='icontains')  
-
-   class Meta:
-      model =  ProductModel
-      fields = ['price', 'category', 'brand', 'discount']
-
-class ProductListAllView(ListAPIView):
-   queryset = ProductModel.objects.filter(status=True)
-   serializer_class = ProductListSerializer
-   filter_backends = [DjangoFilterBackend]
-   filterset_class = ProductFilter
-   # search_fields = ['name']  # Campos que se pueden buscar /products/?search=laptop
-   pagination_class = CustomPageNumberPagination  # Aplicar la paginación personalizada
-
-   def list(self, request, *args, **kwargs):
-      response = super().list(request, *args, **kwargs)
-
-      try:
-         return Response({
-            'message': 'Get all products successfully',
-            'data': response.data
-            })
-
-      except Exception as e:
-         return Response({
-            'message': 'Ocurrio un error inesperado',
-            'error': str(e)
-         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 class CreateProductView(CreateAPIView):
    serializer_class = CreateProductSerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
    
    @swagger_auto_schema(
       request_body=CreateProductSerializer,
@@ -193,6 +151,7 @@ class CreateProductView(CreateAPIView):
 class UpdateProductView(UpdateAPIView):
    queryset = ProductModel.objects.all()
    serializer_class = UpdateProductSerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
    
    def update(self, request, *args, **kwargs):
       try:
@@ -297,6 +256,90 @@ class UpdateProductView(UpdateAPIView):
             'error': str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class IsActiveProduc(ListAPIView):
+   queryset = ProductModel.objects.all()
+   serializer_class = IsActiveResponse
+   permission_classes = [IsAuthenticated,IsAdmin] 
+
+   def list(self, request, *args, **kwargs):
+      id_product = kwargs.get('pk')
+      if not id_product:
+         return Response({
+            'message': 'Envia el id del producto',
+         }, status=status.HTTP_400_BAD_REQUEST)
+      try:
+      
+         product = self.queryset.get(id=id_product)
+
+         if product.status:
+            product.status = False
+            product.save()
+            return Response({
+              'message': 'El producto está deshabilitado',
+              'data': False,
+            }, status=status.HTTP_200_OK)
+         
+         product.status = True
+         product.save()
+         return Response({
+            'message': 'El producto esta habilitado',
+            'data': True,
+         }, status=status.HTTP_404_NOT_FOUND)
+
+      except ProductModel.DoesNotExist:
+         return Response({
+            'message': 'Producto no encontrado',
+         }, status=status.HTTP_404_NOT_FOUND)
+
+      except Exception as e:
+         return Response({
+            'message': 'Error inesperado',
+         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CustomPageNumberPagination(PageNumberPagination):
+   page_size = 20
+   page_size_query_param = 'page_size'
+   max_page_size = 100
+
+class ProductFilter(django_filters.FilterSet):
+   min_price = django_filters.NumberFilter(field_name="price", lookup_expr='gte') #  mayor o igual a (gte)
+   max_price = django_filters.NumberFilter(field_name="price", lookup_expr='lte')  #  menor o igual a (lte) 
+   discount = django_filters.NumberFilter(field_name="discount", lookup_expr='lte')
+   category = django_filters.CharFilter(field_name="category__name", lookup_expr='icontains')
+   brand = django_filters.CharFilter(field_name="brand__name", lookup_expr='icontains')
+
+   #Busqueda por el nombre del producto 
+   search = django_filters.CharFilter(field_name="name", lookup_expr='icontains')  
+
+   class Meta:
+      model =  ProductModel
+      fields = ['price', 'category', 'brand', 'discount']
+
+class ProductListAllView(ListAPIView):
+   queryset = ProductModel.objects.filter(status=True)
+   serializer_class = ProductListSerializer
+   filter_backends = [DjangoFilterBackend]
+   filterset_class = ProductFilter
+   pagination_class = CustomPageNumberPagination  # Aplicar la paginación personalizada
+   # search_fields = ['name']  # Campos que se pueden buscar /products/?search=laptop
+
+   def list(self, request, *args, **kwargs):
+      response = super().list(request, *args, **kwargs)
+
+      try:
+         return Response({
+            'message': 'Get all products successfully',
+            'data': response.data
+            })
+
+      except Exception as e:
+         return Response({
+            'message': 'Ocurrio un error inesperado',
+            'error': str(e)
+         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
 class GetByIdProduct(ListAPIView):
    queryset = ProductModel.objects.filter(status=True)
    serializer_class = ByIdproductSerializer
@@ -333,45 +376,6 @@ class GetByIdProduct(ListAPIView):
             'message': 'Producto no encontrado',
          }, status=status.HTTP_404_NOT_FOUND)
        
-      except Exception as e:
-         return Response({
-            'message': 'Error inesperado',
-         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-class IsActiveProduc(ListAPIView):
-   queryset = ProductModel.objects.all()
-   serializer_class = IsActiveResponse
-
-   def list(self, request, *args, **kwargs):
-      id_product = kwargs.get('pk')
-      if not id_product:
-         return Response({
-            'message': 'Envia el id del producto',
-         }, status=status.HTTP_400_BAD_REQUEST)
-      try:
-      
-         product = self.queryset.get(id=id_product)
-
-         if product.status:
-            product.status = False
-            product.save()
-            return Response({
-              'message': 'El producto está deshabilitado',
-              'data': False,
-            }, status=status.HTTP_200_OK)
-         
-         product.status = True
-         product.save()
-         return Response({
-            'message': 'El producto esta habilitado',
-            'data': True,
-         }, status=status.HTTP_404_NOT_FOUND)
-
-      except ProductModel.DoesNotExist:
-         return Response({
-            'message': 'Producto no encontrado',
-         }, status=status.HTTP_404_NOT_FOUND)
-
       except Exception as e:
          return Response({
             'message': 'Error inesperado',
@@ -447,6 +451,7 @@ class ProductCategoryGelAllView(ListAPIView):
 class ProductCategoryCreate(CreateAPIView):
    queryset = ProductCategoryModel.objects.all()
    serializer_class = ProductCategorySerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
 
    def create(self, request, *args, **kwargs):
       response = super().create(request, *args, **kwargs)
@@ -459,6 +464,7 @@ class ProductCategoryCreate(CreateAPIView):
 class ProductCategoryUpdateView(UpdateAPIView):
    queryset = ProductCategoryModel.objects.all()
    serializer_class = ProductCategorySerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
 
    def update(self, request, *args, **kwargs):
       try:
@@ -495,6 +501,7 @@ class ProductBrandGelAllView(ListAPIView):
 class ProductBrandCreateView(CreateAPIView):
    queryset = ProductBrandModel.objects.all()
    serializer_class = ProductBrandSerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
 
    def create(self, request, *args, **kwargs):
       response = super().create(request, *args, **kwargs)
@@ -507,6 +514,7 @@ class ProductBrandCreateView(CreateAPIView):
 class ProductBrandUpdateView(UpdateAPIView):
    queryset = ProductBrandModel.objects.all()
    serializer_class = ProductBrandSerializer
+   permission_classes = [IsAuthenticated,IsAdmin] 
    
    def update(self, request, *args, **kwargs):
       try:

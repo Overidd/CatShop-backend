@@ -2,24 +2,27 @@ from django.db import models
 from cloudinary.models import CloudinaryField
 from purchases.models import OrderModel
 from product.models import ProductModel
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-
-from catshop.manage import UserManager
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 
 class RoleModel(models.Model):
-   id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
 
-   ROLE_NAME_CHOICES = [
-      ('ADMIN', 'Administrador'),
-      ('CLIENT', 'Cliente')
-   ]
+    ROLE_NAME_CHOICES = [
+        ('CLIENT', 'Cliente'),
+        ('ADMIN', 'Administrador'),
+    ]
 
-   name = models.CharField(max_length=100,choices=ROLE_NAME_CHOICES, default='CLIENT')
+    name = models.CharField(max_length=100, choices=ROLE_NAME_CHOICES, default='CLIENT')
 
-   class Meta:
-      db_table = 'roles'
+    class Meta:
+        db_table = 'roles'
 
-class UserClientModel(AbstractBaseUser):
+    def __str__(self):
+        return self.name
+
+from .manage import UserClientManager
+
+class UserClientModel(AbstractBaseUser, PermissionsMixin):
    id = models.AutoField(primary_key=True)
    name = models.CharField(max_length=200)
    image = CloudinaryField('image', folder='user_client/')
@@ -33,18 +36,28 @@ class UserClientModel(AbstractBaseUser):
    is_verified = models.BooleanField(default=False)  # Para saber si el usuario ha verificado su cuenta
    status = models.BooleanField(default=True)
 
-   is_superuser = models.BooleanField(default=False, null=True)
-   role_id = models.ForeignKey(RoleModel, on_delete=models.CASCADE, related_name='users', null=True)
-
    created_at = models.DateTimeField(auto_now_add=True)
    updated_at = models.DateTimeField(auto_now=True)
 
-   objects = UserManager()
+   is_superuser = models.BooleanField(default=False, null=True)
+   role = models.ForeignKey(RoleModel, on_delete=models.CASCADE, related_name='users', default=1)
+   is_staff = models.BooleanField(default=False, null=True)
+
+   objects = UserClientManager()
    USERNAME_FIELD = 'email'
    REQUIRED_FIELDS = []
 
    class Meta:
       db_table = 'user_client'
+
+   def __str__(self):
+        return self.email
+
+   def has_perm(self, perm, obj=None):
+        return self.is_superuser
+
+   def has_module_perms(self, app_label):
+        return self.is_superuser
 
 
 class UserAddressModel(models.Model):
@@ -91,4 +104,4 @@ class UserFavoritesModel(models.Model):
    user_client = models.ForeignKey(UserClientModel, related_name='favorite_user', on_delete=models.CASCADE)
       
    class Meta:
-        db_table = 'user_favorite'
+      db_table = 'user_favorite'

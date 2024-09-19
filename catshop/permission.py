@@ -23,18 +23,18 @@ def custom_exception_handler(exc, context):
    return response
 
 class IsAdmin(BasePermission):
-   def has_permission(self, request, view):      
-      if request.user.role_id.name != 'ADMIN':
+   def has_permission(self, request, view):  
+      if request.user.role.name != 'ADMIN':
          raise AuthenticationFailed(detail={
              'message': 'Unauthorized'
          }, code=401)
 
       return True
-    
+   
 
 class IsClient(BasePermission):
     def has_permission(self, request, view):
-      if request.user.role_id.name != 'CLIENT':
+      if request.user.role.name != 'CLIENT':
          raise AuthenticationFailed(detail={
              'message': 'Unauthorized'
          }, code=401)
