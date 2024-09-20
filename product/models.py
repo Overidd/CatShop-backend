@@ -54,9 +54,9 @@ class ProductModel(models.Model):
 class ProductDetailModel(models.Model):
    id = models.AutoField(primary_key=True)
    color = models.CharField(max_length=100, null=True)
-   denifit = models.CharField(max_length=200,null=True)
+   benifit = models.CharField(max_length=200,null=True)
    dimension = models.CharField(max_length=100, null=True)
-   size = models.CharField(max_length=20, null=True)
+   weight = models.CharField(max_length=20, null=True)
    characteristics = models.TextField(null=True)
    extra = models.CharField(max_length=200, null=True)
    product = models.OneToOneField(ProductModel, on_delete=models.CASCADE, related_name='product_detail')

@@ -56,7 +56,7 @@ hashids = Hashids(salt=settings.SALT_HASHIDS, min_length=6)
 
 class CreateProductView(CreateAPIView):
    serializer_class = CreateProductSerializer
-   # permission_classes = [IsAuthenticated,IsAdmin] 
+   permission_classes = [IsAuthenticated,IsAdmin] 
    
    @swagger_auto_schema(
       request_body=CreateProductSerializer,
@@ -84,9 +84,9 @@ class CreateProductView(CreateAPIView):
 
          # Manejar datos de detalle para el model ProductDetalsModel
          color = validated_data.get('color')
-         denifit = validated_data.get('denifit')
+         benifit = validated_data.get('benifit')
          dimension = validated_data.get('dimension')
-         size = validated_data.get('size')
+         weight = validated_data.get('weight')
          characteristics = validated_data.get('characteristics')
          extra = validated_data.get('extra')
 
@@ -125,9 +125,9 @@ class CreateProductView(CreateAPIView):
          # Crear los detalles del producto
          ProductDetailModel.objects.create(
             color=color,
-            denifit=denifit,
+            denifit=benifit,
             dimension=dimension,
-            size=size,
+            size=weight,
             characteristics=characteristics,
             extra=extra,
             product=new_product,
@@ -209,9 +209,9 @@ class UpdateProductView(UpdateAPIView):
 
          detail_data = {
             'color': validated_data.get('color'),
-            'denifit': validated_data.get('denifit'),
+            'benifit': validated_data.get('benifit'),
             'dimension': validated_data.get('dimension'),
-            'size': validated_data.get('size'),
+            'weight': validated_data.get('weight'),
             'characteristics': validated_data.get('characteristics'),
             'extra': validated_data.get('extra'),
          }

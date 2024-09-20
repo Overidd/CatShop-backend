@@ -84,9 +84,9 @@ class CreateProductSerializer(serializers.Serializer):
    brand_id = serializers.IntegerField(required=False, allow_null=True)  
 
    color = serializers.CharField(max_length=100, required=False, allow_null=True)
-   denifit = serializers.CharField(max_length=200, required=False, allow_null=True)
+   benifit = serializers.CharField(max_length=200, required=False, allow_null=True)
    dimension = serializers.CharField(max_length=100, required=False, allow_null=True)
-   size = serializers.CharField(max_length=20, required=False, allow_null=True)
+   weight = serializers.CharField(max_length=20, required=False, allow_null=True)
    characteristics = serializers.CharField(required=False, allow_null=True)
    extra = serializers.CharField(max_length=200, required=False, allow_null=True)
 
@@ -113,9 +113,9 @@ class UpdateProductSerializer(serializers.Serializer):
    brand_id = serializers.IntegerField(required=False, allow_null=True)
 
    color = serializers.CharField(max_length=100, required=False, allow_null=True, allow_blank=True)
-   denifit = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
+   benifit = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
    dimension = serializers.CharField(max_length=100, required=False, allow_null=True, allow_blank=True)
-   size = serializers.CharField(max_length=20, required=False, allow_null=True, allow_blank=True)
+   weight = serializers.CharField(max_length=20, required=False, allow_null=True, allow_blank=True)
    characteristics = serializers.CharField(required=False, allow_null=True, allow_blank=True)
    extra = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
 
