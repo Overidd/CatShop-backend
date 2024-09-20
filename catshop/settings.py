@@ -168,9 +168,7 @@ config(
     cloud_name = os.getenv('NAME_CLOUDINARY'),
     api_key = os.getenv('API_KEY_CLOUDINARY'),
     api_secret = os.getenv('API_SECRET_CLOUDINARY'),
-    # secure = True,
-    # timeout=60,  # Aumenta el tiempo de espera
-    # api_proxy='http://proxy.example.com:8080'  # Configura un proxy si es necesario
+    secure = True,
 )
 
 
