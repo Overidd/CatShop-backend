@@ -94,6 +94,7 @@ class CreateProductView(CreateAPIView):
          image1 = validated_data.get('image1', None)
          image2 = validated_data.get('image2', None)
          image3 = validated_data.get('image3', None)
+         image4 = validated_data.get('image4', None)
          
          is_category= ProductCategoryModel.objects.filter(id=category_id).first()
          if not is_category:
@@ -138,7 +139,7 @@ class CreateProductView(CreateAPIView):
                image=image1,
                default=True,
                product=new_product,
-            )
+            ) 
          
          if image2:
             ProductImageModel.objects.create(
@@ -147,9 +148,16 @@ class CreateProductView(CreateAPIView):
                product=new_product,
             )
          
-         if image2:
+         if image3:
             ProductImageModel.objects.create(
-               image=image2,
+               image=image3,
+               default=False,
+               product=new_product,
+            )
+
+         if image4:
+            ProductImageModel.objects.create(
+               image=image4,
                default=False,
                product=new_product,
             )
@@ -159,16 +167,14 @@ class CreateProductView(CreateAPIView):
             'data': serializer.data
          },status=status.HTTP_201_CREATED)
          
-      except serializers.ValidationError as e:
-            # transaction.rollback() 
+      except serializers.ValidationError as e: 
          return Response({
              "message": "Datos inválidos",
              "error": e.detail 
          }, status=status.HTTP_400_BAD_REQUEST)
          
       except Exception as e:
-         print(e)
-            # transaction.rollback() 
+         print(e) 
          return Response({
             'message': 'Ocurrió un error inesperado',
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

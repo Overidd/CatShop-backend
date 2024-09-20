@@ -93,6 +93,7 @@ class CreateProductSerializer(serializers.Serializer):
    image1 = serializers.ImageField(required=False, allow_null=True)
    image2 = serializers.ImageField(required=False, allow_null=True)
    image3 = serializers.ImageField(required=False, allow_null=True)
+   image4 = serializers.ImageField(required=False, allow_null=True)
 
    def to_representation(self, instance):
       # Llamar a la representación predeterminada
