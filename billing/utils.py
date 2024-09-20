@@ -94,17 +94,20 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
 
          venta_al_credito = []
          date = datetime.now()
-         price_quotas = total_price / order_payment.installments
-         if order_payment.installments > 1:
-            for i in range(1, order_payment.installments + 1):
-                next_month = date + relativedelta(months=i)
-                venta_al_credito.append({
-                  "cuota": i,
-                  "fecha_de_pago": next_month.strftime('%d-%m-%Y'),
-                  "importe": price_quotas,
-                })
-         else:
-            venta_al_credito = ""
+         medio_de_pago = 'Tarjeta'
+         if order_payment:
+            medio_de_pago = order_payment.payment_method
+            price_quotas = total_price / order_payment.installments
+            if order_payment.installments > 1:
+               for i in range(1, order_payment.installments + 1):
+                  next_month = date + relativedelta(months=i)
+                  venta_al_credito.append({
+                     "cuota": i,
+                     "fecha_de_pago": next_month.strftime('%d-%m-%Y'),
+                     "importe": price_quotas,
+                  })
+            else:
+               venta_al_credito = ""
 
         # Generar nuevo id InvoicePayments
          newInvoicePayments = InvoicePaymentsModel.objects.create()
@@ -131,7 +134,7 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
             'enviar_automaticamente_al_cliente': True,
             'codigo_unico': order.code, # Código único generado y asignado por tu sistema. Por ejemplo puede estar compuesto por el tipo de documento, serie y número correlativo.
             'formato_de_pdf': "A5",
-            'medio_de_pago': order_payment.payment_method,
+            'medio_de_pago':medio_de_pago,
             'venta_al_credito': venta_al_credito,
             'items': items,
          }

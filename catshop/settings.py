@@ -122,7 +122,6 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -230,7 +229,7 @@ SWAGGER_SETTINGS = {
     }
 }
 
-# Configuraciones de CORS
+#* Configuraciones de CORS
 CORS_ALLOW_ALL_ORIGINS = True
 # CORS_ALLOWED_ORIGINS = [
 #     'http://localhost:3000',

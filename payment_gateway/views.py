@@ -360,22 +360,21 @@ class ProcessPaymentView(GenericAPIView):
          # Acceder a las relaciones OneToOne
          order_identification = order.order_identification
 
-         order_delivery = IsOrderDelivery('Tienda', '')
+         order_delivery = IsOrderDelivery('Tienda', 'tienda')
          if hasattr(order, 'order_store'):
             order_store = order.order_store.store_name
-            order_delivery = IsOrderDelivery(order_store, '')
+            order_delivery = IsOrderDelivery(order_store, 'tienda')
 
          if hasattr(order, 'order_delivery'):
             order_store = order.order_delivery.address
-            order_delivery = IsOrderDelivery(order_store, '')
+            order_delivery = IsOrderDelivery(order_store, 'tienda')
 
          if order.total <= 0:
             return Response({
                "message": "El total de la orden es negativo, no se puede realizar el pago",
             }, status=status.HTTP_400_BAD_REQUEST)
-            
 
-         amount = int((order.total * 100) + order.price_delivery)  # Convertir a céntimos, por ejemplo, 100.00 soles -> 10000 céntimos
+         amount = int((order.total + order.price_delivery)*100)  # Convertir a céntimos, por ejemplo, 100.00 soles -> 10000 céntimos
 
          # Crear el payload para la solicitud a Culqi
          data = {

@@ -8,7 +8,9 @@ class ProductCategoryModel(models.Model):
 
    class Meta:
       db_table = 'product_category'
-
+      verbose_name =  'Categoria'
+      verbose_name_plural = 'Categorias'
+      
    def __str__(self):
       return self.name
 
@@ -18,6 +20,11 @@ class ProductBrandModel(models.Model):
 
    class Meta:
       db_table = 'product_brand'
+      verbose_name = 'Marca'
+      verbose_name_plural = 'Marcas'
+   
+   def __str__(self):
+      return self.name
 
 #* ---.
 class ProductModel(models.Model):
@@ -37,6 +44,12 @@ class ProductModel(models.Model):
 
    class Meta:
       db_table = 'product'
+      verbose_name = 'Producto'
+      verbose_name_plural = 'Productos'
+
+   def __str__(self):
+      return self.name
+   
   
 class ProductDetailModel(models.Model):
    id = models.AutoField(primary_key=True)
@@ -50,6 +63,11 @@ class ProductDetailModel(models.Model):
 
    class Meta:
       db_table = 'product_detail'
+      verbose_name = 'Detalle del producto'
+      verbose_name_plural = 'Detalles del producto'
+   
+   def __str__(self):
+      return self.product.name
 
 class ProductImageModel(models.Model):
    id = models.AutoField(primary_key=True)
@@ -59,4 +77,6 @@ class ProductImageModel(models.Model):
 
    class Meta:
       db_table = 'product_image'
+      verbose_name = 'Imagen del producto'
+      verbose_name_plural = 'Imágenes del producto'
 
