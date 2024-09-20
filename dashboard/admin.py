@@ -21,9 +21,9 @@ class StoreAdmin(admin.ModelAdmin):
 # Register your models here.
 @admin.register(StoreModel)
 class StoreAdmin(admin.ModelAdmin):
-   # list_display = ('name','schedules','status', 'address')
-   # search_fields = ('address', 'name')
-   # list_filter = ('status', 'schedules')
+   list_display = ('name','schedules','status', 'address')
+   search_fields = ('address', 'name')
+   list_filter = ('status', 'schedules')
    fieldsets = (
       ('Informacion de la tienda', {
          'fields': ('name','schedules', 'address')
