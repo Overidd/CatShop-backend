@@ -50,6 +50,8 @@ from catshop.response import (
    NOT_FOUND,
 )
 
+from requests.exceptions import ConnectionError
+
 hashids = Hashids(salt=settings.SALT_HASHIDS, min_length=6)
 
 class CreateProductView(CreateAPIView):
@@ -89,8 +91,22 @@ class CreateProductView(CreateAPIView):
          extra = validated_data.get('extra')
 
          # Manejar de imágenes
-         images = validated_data.get('images', [])
-
+         image1 = validated_data.get('image1', None)
+         image2 = validated_data.get('image2', None)
+         image3 = validated_data.get('image3', None)
+         
+         is_category= ProductCategoryModel.objects.filter(id=category_id).first()
+         if not is_category:
+            return Response({
+                'message': 'Categoría no existente',
+             }, status=status.HTTP_404_NOT_FOUND)
+         
+         is_brand = ProductBrandModel.objects.filter(id=brand_id).first()
+         if not is_brand:
+            return Response({
+                'message': 'Marca no existente',
+             }, status=status.HTTP_404_NOT_FOUND)
+         
          # Crear el producto
          new_product = ProductModel.objects.create(
             name=name,
@@ -117,18 +133,26 @@ class CreateProductView(CreateAPIView):
          )
 
          # Subir imágenes a Cloudinary
-         image_products = []
-         defaul = True
-         for image in images:
-            is_default = defaul
-            defaul = False
-
-            new_product_image = ProductImageModel.objects.create(
-               image=image,
-               default=is_default,
+         if image1:
+            ProductImageModel.objects.create(
+               image=image1,
+               default=True,
                product=new_product,
             )
-            image_products.append(new_product_image.image.url)
+         
+         if image2:
+            ProductImageModel.objects.create(
+               image=image2,
+               default=False,
+               product=new_product,
+            )
+         
+         if image2:
+            ProductImageModel.objects.create(
+               image=image2,
+               default=False,
+               product=new_product,
+            )
 
          return Response({
             'message': 'Producto creado exitosamente',
@@ -143,6 +167,7 @@ class CreateProductView(CreateAPIView):
          }, status=status.HTTP_400_BAD_REQUEST)
          
       except Exception as e:
+         print(e)
             # transaction.rollback() 
          return Response({
             'message': 'Ocurrió un error inesperado',
@@ -451,7 +476,7 @@ class ProductCategoryGelAllView(ListAPIView):
 class ProductCategoryCreate(CreateAPIView):
    queryset = ProductCategoryModel.objects.all()
    serializer_class = ProductCategorySerializer
-   permission_classes = [IsAuthenticated,IsAdmin] 
+   # permission_classes = [IsAuthenticated,IsAdmin] 
 
    def create(self, request, *args, **kwargs):
       response = super().create(request, *args, **kwargs)
@@ -501,7 +526,7 @@ class ProductBrandGelAllView(ListAPIView):
 class ProductBrandCreateView(CreateAPIView):
    queryset = ProductBrandModel.objects.all()
    serializer_class = ProductBrandSerializer
-   permission_classes = [IsAuthenticated,IsAdmin] 
+   # permission_classes = [IsAuthenticated,IsAdmin] 
 
    def create(self, request, *args, **kwargs):
       response = super().create(request, *args, **kwargs)

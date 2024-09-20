@@ -12,7 +12,6 @@ class ProductCategoryModel(models.Model):
 class ProductBrandModel(models.Model):
    id = models.AutoField(primary_key=True)
    name = models.CharField(max_length=100)
-   # product = models.ForeignKey(ProductModel, on_delete=models.CASCADE, related_name='product_brand')
 
    class Meta:
       db_table = 'product_brand'
@@ -22,7 +21,6 @@ class ProductModel(models.Model):
    id = models.AutoField(primary_key=True)
    name = models.CharField(max_length=100)
    price = models.FloatField(default=0)
-   # discount = models.FloatField(null=True, default=0)
    discount = models.IntegerField(null=True, default=0) # Descuento pero valor porcentaje
    description = models.TextField(null=True)
    code = models.CharField(max_length=100, null=True,unique=True)
@@ -52,7 +50,7 @@ class ProductDetailModel(models.Model):
 
 class ProductImageModel(models.Model):
    id = models.AutoField(primary_key=True)
-   image = CloudinaryField('image', folder='product')
+   image = CloudinaryField('image', folder='product/')
    default = models.BooleanField(null=True, default=False)
    product = models.ForeignKey(ProductModel, on_delete=models.CASCADE, related_name='product_image')
 

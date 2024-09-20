@@ -14,6 +14,7 @@ from pathlib import Path
 from cloudinary import config
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -48,6 +49,7 @@ EXTERNAL_APPS = [
     'rest_framework_simplejwt',
     'drf_yasg',
     'django_filters',
+    'corsheaders',
 ]
 
 CATS_SHOP_APP = [
@@ -66,6 +68,8 @@ INSTALLED_APPS = DJANGO_APPS + CATS_SHOP_APP + EXTERNAL_APPS
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -99,10 +103,21 @@ WSGI_APPLICATION = 'catshop.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': os.getenv('DB_ENGINE'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT')
     }
 }
 
@@ -148,14 +163,14 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-#*Configuracion de cloudinary
-from cloudinary import config
 
 config(
     cloud_name = os.getenv('NAME_CLOUDINARY'),
     api_key = os.getenv('API_KEY_CLOUDINARY'),
     api_secret = os.getenv('API_SECRET_CLOUDINARY'),
-    secure = True,
+    # secure = True,
+    # timeout=60,  # Aumenta el tiempo de espera
+    # api_proxy='http://proxy.example.com:8080'  # Configura un proxy si es necesario
 )
 
 
@@ -215,3 +230,9 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+# Configuraciones de CORS
+CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOWED_ORIGINS = [
+#     'http://localhost:3000',
+# ]
