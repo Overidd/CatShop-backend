@@ -56,7 +56,7 @@ hashids = Hashids(salt=settings.SALT_HASHIDS, min_length=6)
 
 class CreateProductView(CreateAPIView):
    serializer_class = CreateProductSerializer
-   permission_classes = [IsAuthenticated,IsAdmin] 
+   # permission_classes = [IsAuthenticated,IsAdmin] 
    
    @swagger_auto_schema(
       request_body=CreateProductSerializer,
