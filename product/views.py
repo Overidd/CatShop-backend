@@ -16,6 +16,7 @@ from rest_framework.generics import (
    CreateAPIView,
    UpdateAPIView,
    ListAPIView,  
+   GenericAPIView
 )
 
 from .models import (
@@ -54,7 +55,7 @@ from requests.exceptions import ConnectionError
 
 hashids = Hashids(salt=settings.SALT_HASHIDS, min_length=6)
 
-class CreateProductView(CreateAPIView):
+class CreateProductView(GenericAPIView):
    serializer_class = CreateProductSerializer
    permission_classes = [IsAuthenticated,IsAdmin] 
    
