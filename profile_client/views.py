@@ -110,10 +110,9 @@ class GetUserByIdView(ListAPIView):
    queryset = UserClientModel.objects.all()
    serializer_class = UserDetailSerializer
    permission_classes = [IsAuthenticated]  # Para la autenticación
-
    def get(self, request, *args, **kwargs):
       try:
-      
+
          token = request.headers.get('Authorization')
          token_user = decode_jwt_token(token=token)
          user_id = token_user.get('user_id', None)
