@@ -130,41 +130,40 @@ class CreateProductView(CreateAPIView):
                 color=color,
                 benefit=benefit,
                 dimension=dimension,
-                weissght=weight,
+                weight=weight,
                 characteristics=characteristics,
                 extra=extra,
                 product=new_product,
             )
 
             # Crear imágenes si existen
-            # if image1:
-            #     ProductImageModel.objects.create(
-            #         image=image1,
-            #         default=True,
-            #         product=new_product,
-            #     )
+            if image1:
+                ProductImageModel.objects.create(
+                    image=image1,
+                    default=True,
+                    product=new_product,
+                )
 
-            # if image2:
-            #     ProductImageModel.objects.create(
-            #         image=image2,
-            #         default=False,
-            #         product=new_product,
-            #     )
+            if image2:
+                ProductImageModel.objects.create(
+                    image=image2,
+                    default=False,
+                    product=new_product,
+                )
 
-            # if image3:
-            #     ProductImageModel.objects.create(
-            #         image=image3,
-            #         default=False,
-            #         product=new_product,
-            #     )
+            if image3:
+                ProductImageModel.objects.create(
+                    image=image3,
+                    default=False,
+                    product=new_product,
+                )
 
-            # if image4:
-            #     ProductImageModel.objects.create(
-            #         image=image4,
-            #         default=False,
-            #         product=new_product,
-            #     )
-            
+            if image4:
+                ProductImageModel.objects.create(
+                    image=image4,
+                    default=False,
+                    product=new_product,
+                )
 
          return Response({
             'message': 'Producto creado exitosamente',
