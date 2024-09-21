@@ -110,57 +110,61 @@ class CreateProductView(CreateAPIView):
                 'message': 'Marca no existente',
              }, status=status.HTTP_404_NOT_FOUND)
          
-         # Crear el producto
-         new_product = ProductModel.objects.create(
-            name=name,
-            price=price,
-            discount=discount,
-            description=description,
-            stock=stock,
-            category_id=category_id,
-            brand_id=brand_id,
-         )
-         code = hashids.encode(new_product.id)
-         new_product.code = code
-         new_product.save()
-
-         # Crear los detalles del producto
-         ProductDetailModel.objects.create(
-            color=color,
-            benefit=benefit,
-            dimension=dimension,
-            weight=weight,
-            characteristics=characteristics,
-            extra=extra,
-            product=new_product,
-         )
-         if image1:
-            ProductImageModel.objects.create(
-               image=image1,
-               default=True,
-               product=new_product,
-            ) 
-         
-         if image2:
-            ProductImageModel.objects.create(
-               image=image2,
-               default=False,
-               product=new_product,
+         with transaction.atomic():
+            # Crear el producto
+            new_product = ProductModel.objects.create(
+                name=name,
+                price=price,
+                discount=discount,
+                description=description,
+                stock=stock,
+                category_id=category_id,
+                brand_id=brand_id,
             )
-         
-         if image3:
-            ProductImageModel.objects.create(
-               image=image3,
-               default=False,
-               product=new_product,
+            code = hashids.encode(new_product.id)
+            new_product.code = code
+            new_product.save()
+
+            # Crear los detalles del producto
+            ProductDetailModel.objects.create(
+                color=color,
+                benefit=benefit,
+                dimension=dimension,
+                weissght=weight,
+                characteristics=characteristics,
+                extra=extra,
+                product=new_product,
             )
 
-         if image4:
-            ProductImageModel.objects.create(
-               image=image4,
-               default=False,
-               product=new_product,
-            )
+            # Crear imágenes si existen
+            # if image1:
+            #     ProductImageModel.objects.create(
+            #         image=image1,
+            #         default=True,
+            #         product=new_product,
+            #     )
+
+            # if image2:
+            #     ProductImageModel.objects.create(
+            #         image=image2,
+            #         default=False,
+            #         product=new_product,
+            #     )
+
+            # if image3:
+            #     ProductImageModel.objects.create(
+            #         image=image3,
+            #         default=False,
+            #         product=new_product,
+            #     )
+
+            # if image4:
+            #     ProductImageModel.objects.create(
+            #         image=image4,
+            #         default=False,
+            #         product=new_product,
+            #     )
+            
 
          return Response({
             'message': 'Producto creado exitosamente',

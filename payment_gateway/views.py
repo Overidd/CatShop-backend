@@ -151,116 +151,116 @@ class RegisterOrderView(CreateAPIView):
                      'error': error_products
                   }
                }, status=status.HTTP_400_BAD_REQUEST)
-
-         # Creamos nuevo orden
-         new_order = OrderModel.objects.create(
-            total=round(total,2), 
-            total_discount=round(total_discount,2),
-         )
-
-         is_order_store, is_order_delivery = self.registerOpcionOrder(opciones_entrega, order_store, order_delivery, new_order)
-         #TODO: Se asignar manualmente el precio por delivery en 20
-         if is_order_delivery:
-            price_delivery = 20
-
-         new_code = 'order-'+ hashids.encode(new_order.id)
-         new_order.code = new_code
-         new_order.price_delivery = price_delivery
-         new_order.save()
-
-         OrderIdentificationModel.objects.create(
-            email = order_identification.email,
-            name = order_identification.name,
-            last_name = order_identification.last_name,
-            document_number = order_identification.document_number,
-            phone = order_identification.phone,
-            ruc = order_identification.ruc,
-            order = new_order,
-         )
-
-         # Generar los OrderDetails
-         order_details_unserialized = []
-         for product in products:
-            order_detail  = next((item for item in order_details  if item.product_id == product.id), None)
-
-            if order_detail:
-               discount = round(product.price * (product.discount / 100), 2)
-               price_final = product.price - discount
-               subtotal = price_final * order_detail.quantity
-
-               new_order_detail = OrderDetailModel.objects.create(
-                  quantity = order_detail.quantity,
-                  price_unit = product.price,
-                  price_final = round(price_final,2),
-                  subtotal = round(subtotal,2),
-                  discount = discount,
-                  name_product = product.name,
-                  product = product,
-                  order = new_order,
-               )
-               new_order_detail.code = 'detail-'+ hashids.encode(new_order_detail.id)
-               new_order_detail.save()
-               order_details_unserialized.append(new_order_detail)
-
-         order_details_data = OrderDetailSerializer(order_details_unserialized, many=True).data
-
-         if isuser.isuser:
-            # TODO: validar el token
-            token_user = decode_jwt_token(isuser.token)
-            user_id = token_user.get('user_id')
-            email = token_user.get('email')
-            user = UserClientModel.objects.filter(id=user_id ,email=email).first()
-
-            # Verificar si el usuario es valido
-            if not user:
-               OrderUserTempModel.objects.create(email=isuser.email ,order=new_order)
-               return Response({
-                  "message": "Orden registrada exitosamente",
-                  "data": {
-                     'code_order': new_order.code,
-                     'total': new_order.total,
-                     'total_general': new_order.total + price_delivery ,
-                     'price_delivery': price_delivery,
-                     'total_discount': new_order.total_discount,
-                     'order_detail': order_details_data,
-                  }
-               }, status=status.HTTP_201_CREATED)
-
-            UserOrderModel.objects.create(
-               order=new_order, 
-               user_client=user,
+         with transaction.atomic():
+            # Creamos nuevo orden
+            new_order = OrderModel.objects.create(
+               total=round(total,2), 
+               total_discount=round(total_discount,2),
             )
 
-            # TODO: Se actualiza la nueva informacion en el perfil del usario      
-            if hasattr(user, 'user_address'):
-               user_address = user.user_address
-               user_address.department = order_delivery.department
-               user_address.province = order_delivery.province
-               user_address.district = order_delivery.district
-               user_address.address = order_delivery.address
-               user_address.street = order_delivery.street
-               user_address.street_number = order_delivery.street_number
-               user_address.reference = order_delivery.reference
-               user_address.save()
-            else:
-               # Crear una nueva dirección
-               UserAddressModel.objects.create(
+            is_order_store, is_order_delivery = self.registerOpcionOrder(opciones_entrega, order_store, order_delivery, new_order)
+            #TODO: Se asignar manualmente el precio por delivery en 20
+            if is_order_delivery:
+               price_delivery = 20
+
+            new_code = 'order-'+ hashids.encode(new_order.id)
+            new_order.code = new_code
+            new_order.price_delivery = price_delivery
+            new_order.save()
+
+            OrderIdentificationModel.objects.create(
+               email = order_identification.email,
+               name = order_identification.name,
+               last_name = order_identification.last_name,
+               document_number = order_identification.document_number,
+               phone = order_identification.phone,
+               ruc = order_identification.ruc,
+               order = new_order,
+            )
+
+            # Generar los OrderDetails
+            order_details_unserialized = []
+            for product in products:
+               order_detail  = next((item for item in order_details  if item.product_id == product.id), None)
+
+               if order_detail:
+                  discount = round(product.price * (product.discount / 100), 2)
+                  price_final = product.price - discount
+                  subtotal = price_final * order_detail.quantity
+
+                  new_order_detail = OrderDetailModel.objects.create(
+                     quantity = order_detail.quantity,
+                     price_unit = product.price,
+                     price_final = round(price_final,2),
+                     subtotal = round(subtotal,2),
+                     discount = discount,
+                     name_product = product.name,
+                     product = product,
+                     order = new_order,
+                  )
+                  new_order_detail.code = 'detail-'+ hashids.encode(new_order_detail.id)
+                  new_order_detail.save()
+                  order_details_unserialized.append(new_order_detail)
+
+            order_details_data = OrderDetailSerializer(order_details_unserialized, many=True).data
+
+            if isuser.isuser:
+               # TODO: validar el token
+               token_user = decode_jwt_token(isuser.token)
+               user_id = token_user.get('user_id')
+               email = token_user.get('email')
+               user = UserClientModel.objects.filter(id=user_id ,email=email).first()
+
+               # Verificar si el usuario es valido
+               if not user:
+                  OrderUserTempModel.objects.create(email=isuser.email ,order=new_order)
+                  return Response({
+                     "message": "Orden registrada exitosamente",
+                     "data": {
+                        'code_order': new_order.code,
+                        'total': new_order.total,
+                        'total_general': new_order.total + price_delivery ,
+                        'price_delivery': price_delivery,
+                        'total_discount': new_order.total_discount,
+                        'order_detail': order_details_data,
+                     }
+                  }, status=status.HTTP_201_CREATED)
+
+               UserOrderModel.objects.create(
+                  order=new_order, 
                   user_client=user,
-                  department=order_delivery.department,
-                  province=order_delivery.province,
-                  district=order_delivery.district,
-                  address=order_delivery.address,
-                  street=order_delivery.street,
-                  street_number=order_delivery.street_number,
-                  reference=order_delivery.reference,
                )
-         
-         if not isuser.isuser:
-            # En caso de que el usuario no este registrado
-            OrderUserTempModel.objects.create(
-               email=order_identification.email,
-               order=new_order
-            )
+            with transaction.atomic():
+               # TODO: Se actualiza la nueva informacion en el perfil del usario      
+               if hasattr(user, 'user_address'):
+                  user_address = user.user_address
+                  user_address.department = order_delivery.department
+                  user_address.province = order_delivery.province
+                  user_address.district = order_delivery.district
+                  user_address.address = order_delivery.address
+                  user_address.street = order_delivery.street
+                  user_address.street_number = order_delivery.street_number
+                  user_address.reference = order_delivery.reference
+                  user_address.save()
+               else:
+                  # Crear una nueva dirección
+                  UserAddressModel.objects.create(
+                     user_client=user,
+                     department=order_delivery.department,
+                     province=order_delivery.province,
+                     district=order_delivery.district,
+                     address=order_delivery.address,
+                     street=order_delivery.street,
+                     street_number=order_delivery.street_number,
+                     reference=order_delivery.reference,
+                  )
+            
+            if not isuser.isuser:
+               # En caso de que el usuario no este registrado
+               OrderUserTempModel.objects.create(
+                  email=order_identification.email,
+                  order=new_order
+               )
          
          return Response({
             "message": "Orden registrada exitosamente",
