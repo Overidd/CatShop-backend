@@ -23,7 +23,6 @@ from .serializers import (
 
 from product.serializer import ProductListSerializer
 
-
 from autentication.utils import decode_jwt_token
 #* Importamos el model product
 from product.models import ProductModel
@@ -35,13 +34,12 @@ class GetallFavoriteView(ListAPIView):
 
    def list(self, request, *args, **kwargs):
       try:
-         idUser = kwargs.get('pk')
-         if not idUser or not idUser.isdigit():
-            return Response({
-               'message': 'Envia el id el usuario',
-            }, status=status.HTTP_400_BAD_REQUEST)
+         token = request.headers.get('Authorization')
+         token_user = decode_jwt_token(token=token)
+         user_id = token_user.get('user_id', None)
+         user = UserClientModel.objects.get(id=user_id)
 
-         user_favorites = self.queryset.filter(user_client_id=idUser)
+         user_favorites = self.queryset.filter(user_client_id=user.id)
 
          if not user_favorites.exists():
             return Response({
@@ -49,14 +47,18 @@ class GetallFavoriteView(ListAPIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
          product_ids = user_favorites.values_list('product_id', flat=True)
-         product_favorites = ProductModel.objects.filter(id__in=product_ids, stock__gt=0, status=True)
+         product_favorites = ProductModel.objects.filter(id__in=product_ids, status=True)
 
          products = ProductListSerializer(data=product_favorites, many=True).data
          return Response({
             'message': 'Productos favoritos obtenidos correctamente',
             'data': products,
          }, status=status.HTTP_200_OK)
-
+      
+      except UserClientModel.DoesNotExist:
+         return Response({
+            'message': 'unauthorized',
+         }, status=status.HTTP_404_NOT_FOUND)
       except Exception as e:
          return Response({
             'message': 'Ocurrió un error inesperado',
@@ -68,13 +70,12 @@ class DestroyFavoriteView(DestroyAPIView):
    permission_classes = [IsAuthenticated]  # Para la autenticación
    def destroy(self, request, *args, **kwargs):
       try:
-         id = kwargs.get('pk')
-         if not id:
-            return Response({
-               'message': 'Debe proporcionar un id'
-            }, status=status.HTTP_400_BAD_REQUEST)
+         token = request.headers.get('Authorization')
+         token_user = decode_jwt_token(token=token)
+         user_id = token_user.get('user_id', None)
+         user = UserClientModel.objects.get(id=user_id)
 
-         user_favorite = self.queryset.get(id=id)
+         user_favorite = self.queryset.get(id=user.id)
          user_favorite.delete()
 
          return Response({
@@ -112,13 +113,13 @@ class GetUserByIdView(ListAPIView):
 
    def get(self, request, *args, **kwargs):
       try:
-         idUser = kwargs.get('pk')
-         if not idUser:
-            return Response({
-               'message': 'Debe proporcionar un id'
-            }, status=status.HTTP_400_BAD_REQUEST)
+      
+         token = request.headers.get('Authorization')
+         token_user = decode_jwt_token(token=token)
+         user_id = token_user.get('user_id', None)
          
-         user = self.queryset.get(id=idUser)
+         user = self.queryset.get(id=user_id)
+
          addresses = user.user_address.all()
          payment_methods = user.user_payment.all() 
          user_orders = user.user_client.all()  # 'user_client' es el related_name en UserOrderModel
@@ -234,8 +235,6 @@ class GetUserAddressView(ListAPIView):
             'message': 'Ocurrió un error inesperado',
             'error': str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
       
 class GetUserIdentificationView(ListAPIView):
    queryset = UserClientModel.objects.all()

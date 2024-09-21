@@ -11,12 +11,12 @@ from .views import (
 )
 
 urlpatterns = [
-   path('favorite/get_all/<int:pk>/', GetallFavoriteView.as_view()),
-   path('favorite/destroy/<int:pk>/', DestroyFavoriteView.as_view()),
+   path('favorite/get_all/', GetallFavoriteView.as_view()),
+   path('favorite/destroy/', DestroyFavoriteView.as_view()),
    path('favorite/create/', CreateFavoriteView.as_view()),
 
    # Rutas para el perfil del usuario
-   path('user/<int:pk>/', GetUserByIdView.as_view()),
+   path('user/', GetUserByIdView.as_view()),
    path('user/update/<int:pk>/', UpdateUserClient.as_view()),
    path('user/address/update/<int:pk>/', UpdateUserAddress.as_view()),
 
