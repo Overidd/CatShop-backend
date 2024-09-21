@@ -36,7 +36,6 @@ class GetallFavoriteView(ListAPIView):
    def list(self, request, *args, **kwargs):
       try:
          idUser = kwargs.get('pk')
-         print(idUser)
          if not idUser or not idUser.isdigit():
             return Response({
                'message': 'Envia el id el usuario',
@@ -114,7 +113,6 @@ class GetUserByIdView(ListAPIView):
    def get(self, request, *args, **kwargs):
       try:
          idUser = kwargs.get('pk')
-         print(idUser)
          if not idUser:
             return Response({
                'message': 'Debe proporcionar un id'
@@ -208,7 +206,6 @@ class GetUserAddressView(ListAPIView):
    def list(self, request, *args, **kwargs):
       try:
          token = request.headers.get('Authorization', None)
-         # print(token)
          if not token:
             return Response({
                'message': 'se requiere Token de usuario'
@@ -216,7 +213,6 @@ class GetUserAddressView(ListAPIView):
          
          # Decodificar token
          token_user = decode_jwt_token(token)
-         print(token_user, 'token_user')
 
          # Extraer datos del token
          user_id = token_user.get('user_id', None)

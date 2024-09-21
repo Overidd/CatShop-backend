@@ -336,7 +336,6 @@ class ResendCodeView(GenericAPIView):
          # Volver a enviar codigo de verificación
          email_code_verification(user, verification_code)
 
-         print(validated_data)
          return Response({
             "message": "Código de verificación enviado correctamente"
          }, status=status.HTTP_200_OK)   

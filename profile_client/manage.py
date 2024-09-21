@@ -9,7 +9,6 @@ class UserClientManager(BaseUserManager):
 
         # Asigna automáticamente el rol de CLIENTE
         client_role = RoleModel.objects.get(name='CLIENT')
-        print(client_role)
         extra_fields.setdefault('role', client_role)
 
         user = self.model(email=email, **extra_fields)

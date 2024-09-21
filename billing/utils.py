@@ -150,7 +150,6 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
          response_status = nubefact_response.status_code
         
          if response_status != 200:
-            print(response_data)
             return None
          
          newInvoicePayments.name_client = order_identification.name
