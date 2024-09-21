@@ -1,6 +1,8 @@
 from django.db import models
 from cloudinary.models import CloudinaryField
 
+
+
 class ProductCategoryModel(models.Model):
    id = models.AutoField(primary_key=True)
    name = models.CharField(max_length=100)
@@ -34,8 +36,9 @@ class ProductModel(models.Model):
    discount = models.IntegerField(null=True, default=0) # Descuento pero valor porcentaje
    description = models.TextField(null=True)
    code = models.CharField(max_length=100, null=True,unique=True)
-   status = models.BooleanField(default=True)
    stock = models.IntegerField(null=False, default=1)
+   
+   status = models.BooleanField(default=True)
    category = models.ForeignKey(ProductCategoryModel, null=True,on_delete=models.SET_NULL, related_name='product_category')
    brand = models.ForeignKey(ProductBrandModel, null=True,on_delete=models.SET_NULL, related_name='product_brand') 
    
@@ -59,6 +62,7 @@ class ProductDetailModel(models.Model):
    weight = models.CharField(max_length=20, null=True, blank=True) 
    characteristics = models.TextField(null=True, blank=True) 
    extra = models.CharField(max_length=200, null=True, blank=True) 
+
    product = models.OneToOneField(ProductModel, on_delete=models.CASCADE, related_name='product_detail')
 
    class Meta:
@@ -72,7 +76,9 @@ class ProductDetailModel(models.Model):
 class ProductImageModel(models.Model):
    id = models.AutoField(primary_key=True)
    image = CloudinaryField('image', folder='product/')
+
    default = models.BooleanField(null=True, default=False)
+
    product = models.ForeignKey(ProductModel, on_delete=models.CASCADE, related_name='product_image')
 
    class Meta:

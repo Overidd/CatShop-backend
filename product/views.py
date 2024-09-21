@@ -73,6 +73,7 @@ class CreateProductView(CreateAPIView):
          serializer.is_valid(raise_exception=True) # Para ValidationError 
 
          validated_data = serializer.validated_data
+
          # Manejar datos Para el model ProductModel
          name = validated_data.get('name')
          price = validated_data.get('price')
@@ -84,7 +85,7 @@ class CreateProductView(CreateAPIView):
 
          # Manejar datos de detalle para el model ProductDetalsModel
          color = validated_data.get('color')
-         benifit = validated_data.get('benifit')
+         benefit = validated_data.get('benefit')
          dimension = validated_data.get('dimension')
          weight = validated_data.get('weight')
          characteristics = validated_data.get('characteristics')
@@ -95,8 +96,9 @@ class CreateProductView(CreateAPIView):
          image2 = validated_data.get('image2', None)
          image3 = validated_data.get('image3', None)
          image4 = validated_data.get('image4', None)
-         
+
          is_category= ProductCategoryModel.objects.filter(id=category_id).first()
+
          if not is_category:
             return Response({
                 'message': 'Categoría no existente',
@@ -125,15 +127,13 @@ class CreateProductView(CreateAPIView):
          # Crear los detalles del producto
          ProductDetailModel.objects.create(
             color=color,
-            benifit=benifit,
+            benefit=benefit,
             dimension=dimension,
             weight=weight,
             characteristics=characteristics,
             extra=extra,
             product=new_product,
          )
-
-         # Subir imágenes a Cloudinary
          if image1:
             ProductImageModel.objects.create(
                image=image1,
@@ -174,7 +174,6 @@ class CreateProductView(CreateAPIView):
          }, status=status.HTTP_400_BAD_REQUEST)
          
       except Exception as e:
-         print(e) 
          return Response({
             'message': 'Ocurrió un error inesperado',
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -209,7 +208,7 @@ class UpdateProductView(UpdateAPIView):
 
          detail_data = {
             'color': validated_data.get('color'),
-            'benifit': validated_data.get('benifit'),
+            'benefit': validated_data.get('benefit'),
             'dimension': validated_data.get('dimension'),
             'weight': validated_data.get('weight'),
             'characteristics': validated_data.get('characteristics'),
