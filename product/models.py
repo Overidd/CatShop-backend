@@ -3,8 +3,8 @@ from cloudinary.models import CloudinaryField
 
 class ProductCategoryModel(models.Model):
    id = models.AutoField(primary_key=True)
-   name = models.CharField(max_length=100, null=False)
-   image = CloudinaryField('image', folder='category/', null=True)
+   name = models.CharField(max_length=100)
+   image = CloudinaryField('image', folder='category/')
 
    class Meta:
       db_table = 'product_category'
@@ -36,7 +36,7 @@ class ProductModel(models.Model):
    code = models.CharField(max_length=100, null=True,unique=True)
    status = models.BooleanField(default=True)
    stock = models.IntegerField(null=False, default=1)
-   category = models.ForeignKey(ProductCategoryModel, on_delete=models.CASCADE, related_name='product_category')
+   category = models.ForeignKey(ProductCategoryModel, null=True,on_delete=models.SET_NULL, related_name='product_category')
    brand = models.ForeignKey(ProductBrandModel, null=True,on_delete=models.SET_NULL, related_name='product_brand') 
    
    created_at = models.DateTimeField(auto_now_add=True)
@@ -53,12 +53,12 @@ class ProductModel(models.Model):
   
 class ProductDetailModel(models.Model):
    id = models.AutoField(primary_key=True)
-   color = models.CharField(max_length=100, null=True)
-   benifit = models.CharField(max_length=200,null=True)
-   dimension = models.CharField(max_length=100, null=True)
-   weight = models.CharField(max_length=20, null=True)
-   characteristics = models.TextField(null=True)
-   extra = models.CharField(max_length=200, null=True)
+   color = models.CharField(max_length=100, null=True, blank=True) 
+   benefit = models.CharField(max_length=200, null=True, blank=True) 
+   dimension = models.CharField(max_length=100, null=True, blank=True) 
+   weight = models.CharField(max_length=20, null=True, blank=True) 
+   characteristics = models.TextField(null=True, blank=True) 
+   extra = models.CharField(max_length=200, null=True, blank=True) 
    product = models.OneToOneField(ProductModel, on_delete=models.CASCADE, related_name='product_detail')
 
    class Meta:

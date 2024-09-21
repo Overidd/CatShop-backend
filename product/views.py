@@ -125,9 +125,9 @@ class CreateProductView(CreateAPIView):
          # Crear los detalles del producto
          ProductDetailModel.objects.create(
             color=color,
-            denifit=benifit,
+            benifit=benifit,
             dimension=dimension,
-            size=weight,
+            weight=weight,
             characteristics=characteristics,
             extra=extra,
             product=new_product,
@@ -482,7 +482,7 @@ class ProductCategoryGelAllView(ListAPIView):
 class ProductCategoryCreate(CreateAPIView):
    queryset = ProductCategoryModel.objects.all()
    serializer_class = ProductCategorySerializer
-   # permission_classes = [IsAuthenticated,IsAdmin] 
+   permission_classes = [IsAuthenticated,IsAdmin] 
 
    def create(self, request, *args, **kwargs):
       response = super().create(request, *args, **kwargs)
@@ -532,7 +532,7 @@ class ProductBrandGelAllView(ListAPIView):
 class ProductBrandCreateView(CreateAPIView):
    queryset = ProductBrandModel.objects.all()
    serializer_class = ProductBrandSerializer
-   # permission_classes = [IsAuthenticated,IsAdmin] 
+   permission_classes = [IsAuthenticated,IsAdmin] 
 
    def create(self, request, *args, **kwargs):
       response = super().create(request, *args, **kwargs)
