@@ -151,7 +151,7 @@ class RegisterOrderView(CreateAPIView):
                      'error': error_products
                   }
                }, status=status.HTTP_400_BAD_REQUEST)
-         with transaction.atomic():
+         # with transaction.atomic():
             # Creamos nuevo orden
             new_order = OrderModel.objects.create(
                total=round(total,2), 
@@ -230,7 +230,6 @@ class RegisterOrderView(CreateAPIView):
                   order=new_order, 
                   user_client=user,
                )
-            with transaction.atomic():
                # TODO: Se actualiza la nueva informacion en el perfil del usario      
                if hasattr(user, 'user_address'):
                   user_address = user.user_address
@@ -281,6 +280,7 @@ class RegisterOrderView(CreateAPIView):
          },status=status.HTTP_400_BAD_REQUEST)
       
       except Exception as e:
+         print(e)
          return Response({
             "message": "Ocurrió un error inesperado",
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
