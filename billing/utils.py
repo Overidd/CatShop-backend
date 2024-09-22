@@ -165,47 +165,53 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
          
          link_pdf = response_data.get('enlace_del_pdf', None)
          # Enviar correo de confirmación al cliente con los detalles de la factura
-         email_billing(order_identification.name, order_identification.email, total_gravada, discount_total, igv_total, total_price, link_pdf)
+         email_billing(order_identification.name, order_identification.email, order.code ,total_gravada, discount_total, igv_total, total_price, link_pdf)
 
          return link_pdf
       except Exception as e:
          print(e)
          return None
         
-from django.core.mail import EmailMessage
+
+
+from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+import requests
 
-def email_billing(name, email, total_gravada, discount_total, igv_total, total_price, link_pdf):
-    # Definir el asunto y el destinatario del correo
-    subject = f'Hola {name}, gracias por tu compra'
-    recipient = [email]
+def email_billing(name, email, order_code,total_gravada, discount_total, igv_total, total_price, link_pdf):
+   # Definir el asunto y el destinatario del correo
+   subject = f'Hola jhon, gracias por tu compra'
+   recipient = [email]
 
-    # Renderizar el HTML
-    html_welcome = render_to_string('catShop_correo_verificado.html', {
-        'name': name,
-        'subtotal': total_gravada,
-        'descuento': discount_total,
-        'igv': igv_total,
-        'total': total_price
-    })
+   # Renderizar el HTML
+   html_welcome = render_to_string('catshop_boleta_electronica.html', {
+       'order_code': order_code,
+       'name': name,
+       'subtotal': total_gravada,
+       'descuento': discount_total,
+       'igv': igv_total,
+       'total': total_price
+   })
 
-    # Crear el mensaje de correo electrónico
-    email_message = EmailMessage(
-        subject=subject,
-        body='',
-        from_email='noreply@localhost.com',
-        to=recipient,
-    )
+   # Crear el mensaje de correo electrónico con EmailMultiAlternatives
+   email_message = EmailMultiAlternatives(
+       subject=subject,
+       body='',
+       from_email='noreply@localhost.com',
+       to=recipient,
+   )
 
-    # Adjuntar el contenido HTML
-    email_message.attach_alternative(html_welcome, "text/html")
+   # Adjuntar el contenido HTML
+   email_message.attach_alternative(html_welcome, "text/html")
+   # Descargar y adjuntar el archivo PDF al correo
+   
+   try:
+       response = requests.get(link_pdf)
+       response.raise_for_status()  # Verificar si la descarga fue exitosa
+       email_message.attach('factura.pdf', response.content, 'application/pdf')
+   except requests.RequestException as e:
+       print(f"Error al descargar el archivo PDF: {e}")
+   # Enviar el correo electrónico
+   email_message.send(fail_silently=False)
+   
 
-    # Adjuntar el archivo PDF al correo
-    try:
-        with open(link_pdf, 'rb') as pdf_file:
-            email_message.attach('factura.pdf', pdf_file.read(), 'application/pdf')
-    except FileNotFoundError:
-        print(f"El archivo PDF en {link_pdf} no se pudo encontrar.")
-
-    # Enviar el correo electrónico
-    email_message.send(fail_silently=False)

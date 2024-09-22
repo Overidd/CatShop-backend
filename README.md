@@ -47,8 +47,23 @@ Esta aplicación maneja la autenticación de los usuarios, permitiendo el regist
 - **POST Endpoint: `auth_resend-code_create`**  
   Funcionalidad: Reenvía el código de verificación al correo del usuario, asegurando que puedan completar la verificación de su cuenta.
 
+### 2: proyecto purchases: se define para manejar órdenes para el sistema de compras de productos.
+- OrderModel: Representa la orden principal con campos como código, total, descuento, precio de entrega, estado, y fechas de creación y actualización.
 
-### 2. **Pasarela de Pagos (`Payment Gateway`)**
+- OrderDetailModel: items de producto que intenta comprar el cliente, incluyendo cantidad, precio unitario, subtotal, descuento, y relación con la orden principal (OrderModel) y el producto (ProductModel).
+
+- OrderIdentificationModel: Contiene los datos de identificación del cliente, como email, nombre, apellido, documento, teléfono, y RUC. Está vinculado de manera única a una orden.
+
+- OrderDeliveryModel: Información de entrega, incluyendo departamento, provincia, distrito, dirección, y referencia. Está relacionado de manera única con una orden.
+
+- OrderStoreModel: Información sobre la tienda asociada a la orden, vinculada de manera única.
+
+- OrderPaymentModel: se guarda el metodo de pago que uso el cliente al realizar el pago, como el monto, método de pago, número de pago, tipo de tarjeta, nombre del titular, y número de cuotas. Relacionado de manera única con una orden.
+
+- OrderUserTempModel: Información temporal del usuario, como email, vinculada de manera única con una orden.
+---
+
+### 3. **Pasarela de Pagos (`Payment Gateway`)**
 Esta aplicación se encarga de procesar los pagos y gestionar la facturación de las órdenes generadas por los usuarios. para el proceso del pago se uso Culqi y Nubefact para la emisión de facturas
 
 - **POST Endpoint: `order_create_create`**  
@@ -107,5 +122,3 @@ Esta aplicación se encarga de procesar los pagos y gestionar la facturación de
     "user_token": "string"
   }
   ```
----
-

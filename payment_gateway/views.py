@@ -139,7 +139,7 @@ class RegisterOrderView(CreateAPIView):
                   product.stock -= order_detail.quantity                  
                   # Deshabilitamos el producto
                   if product.stock <= 0:
-                     product.status = False
+                     product.status = True
 
                   product.save()
          else:

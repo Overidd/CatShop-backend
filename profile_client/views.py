@@ -92,7 +92,7 @@ class DestroyFavoriteView(DestroyAPIView):
             'message': 'Ocurrió un error inesperado',
             'error': str(e)
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+ 
 
 class CreateFavoriteView(CreateAPIView):
    serializer_class = UserFavoritesSerializer

@@ -1,6 +1,7 @@
 from django.db import models
 
 # Create your models here.
+# Se guarda la informacion de la facturacion generada
 class InvoicePaymentsModel(models.Model):
    id = models.AutoField(primary_key=True)
    name_client = models.TextField(max_length=200, null=True)

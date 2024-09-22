@@ -49,7 +49,9 @@ class UserClientModel(AbstractBaseUser, PermissionsMixin):
 
    class Meta:
       db_table = 'user_client'
-
+      verbose_name = 'usuario'
+      verbose_name_plural = 'usuarios'
+   
    def __str__(self):
         return self.email
 
@@ -73,6 +75,8 @@ class UserAddressModel(models.Model):
 
    class Meta:
       db_table = 'user_address'
+      verbose_name = 'dirección'
+      verbose_name_plural = 'direcciones'
 
 class UserPaymentMethodModel(models.Model):
    id = models.AutoField(primary_key=True)
@@ -88,6 +92,8 @@ class UserPaymentMethodModel(models.Model):
 
    class Meta:
       db_table = 'user_payment_method'
+      verbose_name = 'metodo de pago'
+      verbose_name_plural ='metodos de pago'
 
 class UserOrderModel(models.Model):
    id = models.AutoField(primary_key=True)
@@ -96,6 +102,8 @@ class UserOrderModel(models.Model):
 
    class Meta:
       db_table = 'user_order'
+      verbose_name = 'orden user'
+      verbose_name_plural = 'ordenes user'
    
    
 class UserFavoritesModel(models.Model):
@@ -105,3 +113,5 @@ class UserFavoritesModel(models.Model):
       
    class Meta:
       db_table = 'user_favorite'
+      verbose_name = 'producto favorito '
+      verbose_name_plural = 'productos favoritos'
