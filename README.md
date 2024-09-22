@@ -32,7 +32,7 @@ Aquí tienes una versión mejorada y más estructurada para la presentación del
 
 ### Aplicaciones Principales
 
-#### 1. **Autenticación (`Authentication`)**
+### 1. **Autenticación (`Authentication`)**
 Esta aplicación maneja la autenticación de los usuarios, permitiendo el registro, inicio de sesión, y verificación de correo electrónico
 
 - **POST Endpoint: `auth_register_create`**  
@@ -48,9 +48,8 @@ Esta aplicación maneja la autenticación de los usuarios, permitiendo el regist
   Funcionalidad: Reenvía el código de verificación al correo del usuario, asegurando que puedan completar la verificación de su cuenta.
 
 
-#### 2. **Pasarela de Pagos (`Payment Gateway`)**
+### 2. **Pasarela de Pagos (`Payment Gateway`)**
 Esta aplicación se encarga de procesar los pagos y gestionar la facturación de las órdenes generadas por los usuarios. para el proceso del pago se uso Culqi y Nubefact para la emisión de facturas
-
 
 - **POST Endpoint: `order_create_create`**  
   Funcionalidad:  
