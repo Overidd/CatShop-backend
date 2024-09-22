@@ -151,7 +151,7 @@ class RegisterOrderView(CreateAPIView):
                      'error': error_products
                   }
                }, status=status.HTTP_400_BAD_REQUEST)
-         # with transaction.atomic():
+         with transaction.atomic():
             # Creamos nuevo orden
             new_order = OrderModel.objects.create(
                total=round(total,2), 
