@@ -1,1 +1,1 @@
-web: python manage.py collectstatic && gunicorn catshop.wsgi
+web: python manage.py collectstatic --noinput && gunicorn catshop.wsgi
