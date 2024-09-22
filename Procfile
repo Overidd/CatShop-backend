@@ -1,1 +1,1 @@
-web: gunicorn catshop.wsgi
+web: python manage.py collectstatic && gunicorn catshop.wsgi

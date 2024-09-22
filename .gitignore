@@ -2,3 +2,5 @@ venv/
 .env
 __pycache__/
 index.html
+staticfiles
+db.sqlite3
