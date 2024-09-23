@@ -436,7 +436,6 @@ class VerifyQuantity(CreateAPIView):
 
          product_id = validated_data.get('product_id')
          quantity = validated_data.get('quantity')
-         print(product_id, quantity)
 
          product = ProductModel.objects.filter(id=product_id, status=True).first()
          if not product:
