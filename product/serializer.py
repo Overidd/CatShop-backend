@@ -138,5 +138,5 @@ class ByIdproductSerializer(serializers.Serializer):
    images = ProductImageSerializer(many=True)
 
 class VerifyQuantitySerializer(serializers.Serializer):
-   id_product = serializers.IntegerField(required=True)
+   product_id = serializers.IntegerField(required=True)
    quantity = serializers.IntegerField(required=True)
