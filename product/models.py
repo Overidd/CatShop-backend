@@ -33,7 +33,7 @@ class ProductModel(models.Model):
    id = models.AutoField(primary_key=True)
    name = models.CharField(max_length=100)
    price = models.FloatField(default=0)
-   discount = models.IntegerField(null=True, default=0) # Descuento pero valor porcentaje
+   discount = models.IntegerField(null=True, default=0, blank=True) # Descuento pero valor porcentaje
    description = models.TextField(null=True)
    code = models.CharField(max_length=100, null=True,unique=True)
    stock = models.IntegerField(null=False, default=1)

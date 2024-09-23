@@ -14,6 +14,10 @@ class OffersSerializer(serializers.ModelSerializer):
       model = OffersModel
       fields = '__all__'
     
+   def to_representation(self, instance):
+      representation = super().to_representation(instance)
+      representation['category'] = instance.category.name
+      return representation
 
 
 
