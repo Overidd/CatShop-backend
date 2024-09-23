@@ -437,6 +437,12 @@ class VerifyQuantity(CreateAPIView):
          product_id = validated_data.get('product_id')
          quantity = validated_data.get('quantity')
 
+         if quantity < 0:
+            return Response({
+                'message': 'No puede ser negativo',
+                'data': False,
+             }, status=status.HTTP_400_BAD_REQUEST)
+
          product = ProductModel.objects.filter(id=product_id, status=True).first()
          if not product:
             return Response({
