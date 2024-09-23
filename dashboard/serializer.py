@@ -17,6 +17,7 @@ class OffersSerializer(serializers.ModelSerializer):
    def to_representation(self, instance):
       representation = super().to_representation(instance)
       representation['category'] = instance.category.name
+      representation['image'] = instance.image.url
       return representation
 
 
