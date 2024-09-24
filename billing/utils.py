@@ -150,8 +150,8 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
          response_status = nubefact_response.status_code
          print(response_status)
         
-         if response_status != 200:
-            return None
+         # if response_status != 200:
+            # return None
          
          response_data = nubefact_response.json()
          print(response_data)
@@ -176,8 +176,7 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
       except Exception as e:
          print(e)
          return None
-        
-
+      
 
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
