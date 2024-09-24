@@ -12,6 +12,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from typing import Union
 
+from datetime import date
 
 def invoicePayments(order, order_identification:OrderIdentificationType, order_delivery:OrderDeliveryType, order_payment:OrderPaymentType) -> Union[str, None]:
       try:
@@ -123,7 +124,7 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
             'cliente_denominacion': order_identification.name, # Razón o nombre completo del CLIENTE.
             'cliente_direccion': order_delivery.address, #Direccion
             'cliente_email': order_identification.email, # Email del cliente
-            'fecha_de_emision': datetime.now().strftime('%d-%m-%Y'),
+            'fecha_de_emision': date.today().strftime('%d-%m-%Y'),
             'moneda': 1,  # 1:Soles, 2:Dolares 
             'porcentaje_de_igv': 18.0,
             "total_descuento": discount_total, # Total descuento
@@ -149,6 +150,7 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
          print(nubefact_response)
          response_status = nubefact_response.status_code
          print(response_status)
+         print(date.today().strftime('%d-%m-%Y'))
         
          # if response_status != 200:
             # return None
@@ -169,7 +171,7 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
          
          link_pdf = response_data.get('enlace_del_pdf')
          # Enviar correo de confirmación al cliente con los detalles de la factura
-         email_billing(order_identification.name, order_identification.email, order.code ,total_gravada, discount_total, igv_total, total_price, link_pdf)
+         # email_billing(order_identification.name, order_identification.email, order.code ,total_gravada, discount_total, igv_total, total_price, link_pdf)
 
          print(response_data, 'response_data')
          return link_pdf
