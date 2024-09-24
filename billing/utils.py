@@ -150,7 +150,8 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
          print(nubefact_response)
          response_status = nubefact_response.status_code
          print(response_status)
-         print(date.today().strftime('%d-%m-%Y'))
+         print('fecha_de_emision 1', date.today().strftime('%d-%m-%Y'))
+         print('fecha_de_emision 2',datetime.now().strftime('%d-%m-%Y'))
         
          # if response_status != 200:
             # return None
