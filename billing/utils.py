@@ -150,11 +150,9 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
          print(nubefact_response)
          response_status = nubefact_response.status_code
          print(response_status)
-         print('fecha_de_emision 1', date.today().strftime('%d-%m-%Y'))
-         print('fecha_de_emision 2',datetime.now().strftime('%d-%m-%Y'))
         
-         # if response_status != 200:
-            # return None
+         if response_status != 200:
+            return None
          
          response_data = nubefact_response.json()
          print(response_data)
@@ -172,7 +170,7 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
          
          link_pdf = response_data.get('enlace_del_pdf')
          # Enviar correo de confirmación al cliente con los detalles de la factura
-         # email_billing(order_identification.name, order_identification.email, order.code ,total_gravada, discount_total, igv_total, total_price, link_pdf)
+         email_billing(order_identification.name, order_identification.email, order.code ,total_gravada, discount_total, igv_total, total_price, link_pdf)
 
          print(response_data, 'response_data')
          return link_pdf
