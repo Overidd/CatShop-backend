@@ -154,6 +154,8 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
             return None
          
          response_data = nubefact_response.json()
+         print(response_data)
+         
          newInvoicePayments.name_client = order_identification.name
          newInvoicePayments.email_client = order_identification.email
          newInvoicePayments.serie = response_data.get('serie',None)
@@ -169,6 +171,7 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
          # Enviar correo de confirmación al cliente con los detalles de la factura
          email_billing(order_identification.name, order_identification.email, order.code ,total_gravada, discount_total, igv_total, total_price, link_pdf)
 
+         print(response_data, 'response_data')
          return link_pdf
       except Exception as e:
          print(e)
