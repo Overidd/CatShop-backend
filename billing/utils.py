@@ -173,8 +173,15 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
 
          print(response_data, 'response_data')
          return link_pdf
+         #  print(f"Response Data: {response_data}")
+      except requests.exceptions.HTTPError as http_err:
+          print(f"HTTP error occurred: {http_err}")
+      except requests.exceptions.ConnectionError as conn_err:
+          print(f"Connection error occurred: {conn_err}")
+      except requests.exceptions.Timeout as timeout_err:
+          print(f"Timeout error occurred: {timeout_err}")
       except Exception as e:
-         print(e)
+         print(f"An unexpected error occurred: {e}")
          return None
       
 
