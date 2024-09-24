@@ -146,12 +146,14 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
             },
             json=invoice_data
          )
-         response_data = nubefact_response.json()
+         print(nubefact_response)
          response_status = nubefact_response.status_code
+         print(response_status)
         
          if response_status != 200:
             return None
          
+         response_data = nubefact_response.json()
          newInvoicePayments.name_client = order_identification.name
          newInvoicePayments.email_client = order_identification.email
          newInvoicePayments.serie = response_data.get('serie',None)
@@ -163,11 +165,10 @@ def invoicePayments(order, order_identification:OrderIdentificationType, order_d
          newInvoicePayments.string_for_qr_code = response_data.get('cadena_para_codigo_qr', None)
          newInvoicePayments.save()
          
-         link_pdf = response_data.get('enlace_del_pdf', None)
+         link_pdf = response_data.get('enlace_del_pdf')
          # Enviar correo de confirmación al cliente con los detalles de la factura
-         # email_billing(order_identification.name, order_identification.email, order.code ,total_gravada, discount_total, igv_total, total_price, link_pdf)
+         email_billing(order_identification.name, order_identification.email, order.code ,total_gravada, discount_total, igv_total, total_price, link_pdf)
 
-         print(response_data, 'response_data')
          return link_pdf
       except Exception as e:
          print(e)

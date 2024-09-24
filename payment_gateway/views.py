@@ -478,5 +478,3 @@ class ProcessPaymentView(GenericAPIView):
          return Response({
             "message": "Ocurrió un error inesperado",
          }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
