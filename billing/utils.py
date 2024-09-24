@@ -187,10 +187,10 @@ def email_billing(name, email, order_code,total_gravada, discount_total, igv_tot
    html_welcome = render_to_string('catshop_boleta_electronica.html', {
        'order_code': order_code,
        'name': name,
-       'subtotal': total_gravada,
-       'descuento': discount_total,
-       'igv': igv_total,
-       'total': total_price
+       'subtotal': round(total_gravada, 2),
+       'descuento': round(discount_total,2),
+       'igv': round(igv_total, 2),
+       'total': round(total_price, 2)
    })
 
    # Crear el mensaje de correo electrónico con EmailMultiAlternatives

@@ -460,18 +460,6 @@ class ProcessPaymentView(GenericAPIView):
             # TODO: Generar facturacion de los productos comprados 
             link_pdf_invoice = invoicePayments(order, order_identification, order_delivery, order_payment)
             
-            # TODO: Enviar un email al cliente   
-            subject='Pago realizado con éxito'
-            message=f'Se ha realizado un pago exitoso en la orden {order.code}. Por favor, verifica tu información de pago en el link: {link_pdf_invoice}'
-            recipient = order_identification.email
-            send_mail(
-               subject,
-               message,
-               'noreply@localhost.com',
-               [recipient],
-               fail_silently = False
-            )
-
             return Response({
                "message": "Pago realizado exitosamente",
                'link_pdf_invoice': link_pdf_invoice
